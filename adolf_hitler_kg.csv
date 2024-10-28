@@ -1,0 +1,18 @@
+Subject,Relationship,Object
+Adolf Hitler,dateOfBirth,20 April 1889
+Adolf Hitler,dateOfDeath,30 April 1945
+Adolf Hitler,nationality,Austrian-born German
+Adolf Hitler,occupation,Politician
+Adolf Hitler,role,Dictator of Germany
+Adolf Hitler,dictatorshipPeriod,1933-1945
+Adolf Hitler,partyAffiliation,Nazi Party
+Adolf Hitler,title,Chancellor of Germany
+Adolf Hitler,title,Führer (Leader) of Germany
+Adolf Hitler,yearBecameChancellor,1933
+Adolf Hitler,yearBecameFührer,1934
+Adolf Hitler,initiated,World War II in Europe
+World War II,startDate,1 September 1939
+Adolf Hitler,invasion,Poland
+Adolf Hitler,involvement,Military Operations in WWII
+Adolf Hitler,centralRoleIn,Holocaust
+Holocaust,description,Genocide of about six million Jews and millions of other victims
