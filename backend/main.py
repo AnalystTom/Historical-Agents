@@ -66,6 +66,7 @@ def load_historical_figures(file_path='historical_figures.json'):
 def select_random_figure(figures):
     return random.choice(figures)['name']
 
+
 @app.post("/api/start-guessing-game", response_model=GameState)
 async def start_guessing_game():
     session_id = str(len(game_sessions) + 1)  # Simple session ID generation
@@ -80,7 +81,7 @@ async def start_guessing_game():
 
 # Ask a question
 @app.post("/api/ask-question", response_model=AIResponse)
-async def ask_question(request: QuestionRequest):
+async def ask_question(request: QuestionRequest):    
     session = game_sessions.get(request.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -108,6 +109,11 @@ async def ask_question(request: QuestionRequest):
         content=response.choices[0].text.strip(),
         tokens_used=response.usage.total_tokens
     )
+    
+    
+    
+    
+# Programme the guessing part. Where the user inputs a character name, and the endpoint returns either true or false    
     
 # Make a guess@app.post("/api/make-guess", response_model=AIResponse)
 async def make_guess(request: GuessRequest):
