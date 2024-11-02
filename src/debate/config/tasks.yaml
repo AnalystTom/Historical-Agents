@@ -1,0 +1,21 @@
+select_topic_task:
+  description: >
+    Verify if {debater_a_name} and {debater_b_name} are qualified to discuss the given topic: {topic}. Provide a brief confirmation.
+  expected_output: >
+    Confirmation of debaters' qualifications.
+  agent: moderator
+
+debate_round_task:
+  description: >
+    Facilitate a debate where {debater_a_name} and {debater_b_name} present their arguments in progressive rounds, basing their responses on previous exchanges.
+  expected_output: >
+    Arguments from both debaters for the current round.
+  agent: moderator
+  iterations: 5  # We'll handle iterations in the code
+
+declare_winner_task:
+  description: >
+    Evaluate the debate and declare the winner between {debater_a_name} and {debater_b_name}, providing justification.
+  expected_output: >
+    Announcement of the winner with justification.
+  agent: moderator
