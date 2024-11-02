@@ -1,0 +1,298 @@
+{
+    "William Shakespeare": {
+        "bio": {
+            "dateOfBirth": "1564",
+            "dateOfDeath": "1616",
+            "nationality": "English",
+            "occupation": [
+                "Playwright",
+                "Poet",
+                "Actor"
+            ],
+            "notableWorks": [
+                "39 Plays",
+                "154 Sonnets",
+                "Multiple Poems"
+            ],
+            "activePeriod": [
+                "Elizabethan Era",
+                "Jacobean Era"
+            ],
+            "genre": [
+                "Comedies",
+                "Histories",
+                "Tragedies"
+            ],
+            "famousTragedy": [
+                "Hamlet",
+                "Othello",
+                "King Lear",
+                "Macbeth"
+            ],
+            "influence": "English Literature",
+            "globalReach": [
+                "Translated Worldwide",
+                "Most Performed Playwright"
+            ],
+            "personalLife": "Little Known",
+            "legacy": "Celebrated Worldwide"
+        },
+        "quotes": [
+            {
+                "Time": "",
+                "Quote Content": "But release me from my bands / With the help of your good hands...",
+                "Data Source": "Prospero in *The Tempest*"
+            },
+            {
+                "Time": "",
+                "Quote Content": "Time's glory is to calm contending kings, / To unmask falsehood, and bring truth to light.",
+                "Data Source": "*The Rape of Lucrece*"
+            },
+            {
+                "Time": "",
+                "Quote Content": "Blese be the man that spares these stones / And curst be he that moves my bones",
+                "Data Source": "Shakespeare's epitaph"
+            },
+            {
+                "Time": "",
+                "Quote Content": "What cannot be eschewed must be embraced",
+                "Data Source": "*The Merry Wives of Windsor*, Act 5"
+            },
+            {
+                "Time": "1594",
+                "Quote Content": "Beauty itself doth of itself persuade / The eyes of men without an orator.",
+                "Data Source": "*The Rape of Lucrece* (1594)"
+            },
+            {
+                "Time": "",
+                "Quote Content": "That deep torture may be called a hell, / When more is felt than one hath power to tell.",
+                "Data Source": "*The Rape of Lucrece*"
+            },
+            {
+                "Time": "",
+                "Quote Content": "On a day \u2014 alack the day! \u2014 / Love, whose month is ever May...",
+                "Data Source": "*Sonnets to Sundry Notes of Music*, II"
+            },
+            {
+                "Time": "",
+                "Quote Content": "Crabbed age and youth cannot live together: / Youth is full of pleasure, age is full of care",
+                "Data Source": "*The Passionate Pilgrim: A Madrigal*"
+            },
+            {
+                "Time": "",
+                "Quote Content": "I gyve unto my wief my second best bed with the furniture",
+                "Data Source": "Shakespeare's will"
+            },
+            {
+                "Time": "",
+                "Quote Content": "Good frend for Jesus sake forbeare / To digg the dust encloased heare...",
+                "Data Source": "Shakespeare's epitaph"
+            },
+            {
+                "Time": "1592\u20133",
+                "Quote Content": "Now is the winter of our discontent / Made glorious summer by this sun of York.",
+                "Data Source": "*Richard III*, Act I, scene i"
+            },
+            {
+                "Time": "1592\u20133",
+                "Quote Content": "Off with his head!",
+                "Data Source": "*Richard III*, Act III, scene iv"
+            },
+            {
+                "Time": "1592\u20133",
+                "Quote Content": "A horse! A horse! My kingdom for a horse!",
+                "Data Source": "*Richard III*, Act V, scene iv"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "What light through yonder window breaks?",
+                "Data Source": "*Romeo and Juliet*, Act II, scene ii"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "What's in a name? That which we call a rose, / By any other name would smell as sweet.",
+                "Data Source": "*Romeo and Juliet*, Act II, scene ii"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "O Romeo, Romeo! wherefore art thou Romeo?",
+                "Data Source": "*Romeo and Juliet*, Act II, scene ii"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "The course of true love never did run smooth.",
+                "Data Source": "*A Midsummer Night's Dream*, Act I, scene i"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "Lord, what fools these mortals be!",
+                "Data Source": "*A Midsummer Night's Dream*, Act III, scene ii"
+            },
+            {
+                "Time": "1595",
+                "Quote Content": "Love looks not with the eyes, but with the mind, / And therefore is wing'd Cupid painted blind.",
+                "Data Source": "*A Midsummer Night's Dream*, Act I, scene i"
+            },
+            {
+                "Time": "1596\u20137",
+                "Quote Content": "If to do were as easy as to know what were good to do, chapels had been churches, and poor men\u2019s cottages princes\u2019 palaces.",
+                "Data Source": "*The Merchant of Venice*, Act I, scene ii"
+            },
+            {
+                "Time": "1596\u20137",
+                "Quote Content": "All that glisters is not gold.",
+                "Data Source": "*The Merchant of Venice*, Act II, scene vii"
+            },
+            {
+                "Time": "1596\u20137",
+                "Quote Content": "I am a Jew. Hath not a Jew eyes? Hath not a Jew hands, organs, dimensions, senses, affections, passions...",
+                "Data Source": "*The Merchant of Venice*, Act III, scene i"
+            },
+            {
+                "Time": "1597-8",
+                "Quote Content": "The better part of valour is discretion; in the which better part I have saved my life.",
+                "Data Source": "*Henry IV, Part 1*, Act V, scene iv"
+            },
+            {
+                "Time": "1597-8",
+                "Quote Content": "A man can die but once.",
+                "Data Source": "*Henry IV, Part 2*, Act III, scene ii"
+            },
+            {
+                "Time": "1597-8",
+                "Quote Content": "Uneasy lies the head that wears a crown.",
+                "Data Source": "*Henry IV, Part 2*, Act III, scene i"
+            },
+            {
+                "Time": "1598",
+                "Quote Content": "As merry as the day is long.",
+                "Data Source": "*Much Ado About Nothing*, Act II, scene i"
+            },
+            {
+                "Time": "1598",
+                "Quote Content": "Sigh no more, ladies, sigh no more, / Men were deceivers ever...",
+                "Data Source": "*Much Ado About Nothing*, Act II, scene iii"
+            },
+            {
+                "Time": "1598",
+                "Quote Content": "Some Cupid kills with arrows, some with traps.",
+                "Data Source": "*Much Ado About Nothing*, Act III, scene i"
+            },
+            {
+                "Time": "1599",
+                "Quote Content": "Beware the ides of March.",
+                "Data Source": "*Julius Caesar*, Act I, scene ii"
+            },
+            {
+                "Time": "1599",
+                "Quote Content": "Men at some time are masters of their fates: / The fault, dear Brutus, is not in our stars, / But in ourselves...",
+                "Data Source": "*Julius Caesar*, Act I, scene ii"
+            },
+            {
+                "Time": "1599",
+                "Quote Content": "Cowards die many times before their deaths; / The valiant never taste of death but once.",
+                "Data Source": "*Julius Caesar*, Act II, scene ii"
+            },
+            {
+                "Time": "1599",
+                "Quote Content": "Cry 'Havoc!,' and let slip the dogs of war.",
+                "Data Source": "*Julius Caesar*, Act III, scene i"
+            },
+            {
+                "Time": "1599",
+                "Quote Content": "Friends, Romans, countrymen, lend me your ears; / I come to bury Caesar, not to praise him...",
+                "Data Source": "*Julius Caesar*, Act III, scene ii"
+            },
+            {
+                "Time": "1599\u20131600",
+                "Quote Content": "All the world's a stage, / And all the men and women merely players...",
+                "Data Source": "*As You Like It*, Act II, scene vii"
+            },
+            {
+                "Time": "1599\u20131600",
+                "Quote Content": "The fool doth think he is wise, but the wise man knows himself to be a fool.",
+                "Data Source": "*As You Like It*, Act V, scene i"
+            },
+            {
+                "Time": "1600\u20131",
+                "Quote Content": "Neither a borrower nor a lender be; / For loan oft loses both itself and friend...",
+                "Data Source": "*Hamlet*, Act I, scene iii"
+            },
+            {
+                "Time": "1600\u20131",
+                "Quote Content": "Give every man thy ear, but few thy voice.",
+                "Data Source": "*Hamlet*, Act I, scene iii"
+            },
+            {
+                "Time": "1600\u20131",
+                "Quote Content": "The time is out of joint: O cursed spite, / That ever I was born to set it right!",
+                "Data Source": "*Hamlet*, Act I, scene v"
+            },
+            {
+                "Time": "1600\u20131",
+                "Quote Content": "There is nothing either good or bad, but thinking makes it so.",
+                "Data Source": "*Hamlet*, Act II, scene ii"
+            },
+            {
+                "Time": "1600\u20131",
+                "Quote Content": "What a piece of work is a man! / How noble in reason, how infinite in faculty!...",
+                "Data Source": "*Hamlet*, Act II, scene ii"
+            },
+            {
+                "Time": "1601",
+                "Quote Content": "To be or not to be, that is the question.",
+                "Data Source": "*Hamlet*, Act III, scene i"
+            },
+            {
+                "Time": "1601",
+                "Quote Content": "If music be the food of love, play on.",
+                "Data Source": "*Twelfth Night*, Act I, scene i"
+            },
+            {
+                "Time": "1603\u20134",
+                "Quote Content": "Some are born great, some achieve greatness, and some have greatness thrust upon 'em.",
+                "Data Source": "*Twelfth Night*, Act II, scene v"
+            },
+            {
+                "Time": "1603\u20134",
+                "Quote Content": "Reputation is an idle and most false imposition; oft got without merit and lost without deserving.",
+                "Data Source": "*Othello*, Act II, scene iii"
+            },
+            {
+                "Time": "1605",
+                "Quote Content": "Of one that lov'd not wisely but too well.",
+                "Data Source": "*Othello*, Act V, scene ii"
+            },
+            {
+                "Time": "1605\u20136",
+                "Quote Content": "We have seen better days.",
+                "Data Source": "*Timon of Athens*, Act IV, scene ii"
+            },
+            {
+                "Time": "1605\u20136",
+                "Quote Content": "Nothing can come of nothing.",
+                "Data Source": "*King Lear*, Act I, scene i"
+            },
+            {
+                "Time": "1605\u20136",
+                "Quote Content": "How sharper than a serpent's tooth it is / To have a thankless child!",
+                "Data Source": "*King Lear*, Act I, scene iv"
+            },
+            {
+                "Time": "1606",
+                "Quote Content": "I am a man, / More sinn'd against than sinning.",
+                "Data Source": "*King Lear*, Act III, scene ii"
+            },
+            {
+                "Time": "1606",
+                "Quote Content": "The barge she sat in, like a burnish'd throne, / Burnt on the water.",
+                "Data Source": "*Antony and Cleopatra*, Act II, scene ii"
+            },
+            {
+                "Time": "",
+                "Quote Content": "Come what come may, / Time and the hour runs through the roughest day.",
+                "Data Source": "*Macbeth*, Act I, scene iii"
+            }
+        ]
+    }
+}
