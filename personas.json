@@ -1,0 +1,87 @@
+[
+    {
+        "_id": "6724fa5a73f079821aab315b",
+        "historicalFigures": [
+            {
+                "id": "netanyahu",
+                "name": "Benjamin Netanyahu",
+                "period": "Modern Era",
+                "facts": [
+                    "Prime Minister of Israel",
+                    "Served multiple terms",
+                    "Known for his strong stance on security"
+                ],
+                "hints": [
+                    "I am a prominent Israeli politician",
+                    "I have served as Prime Minister multiple times",
+                    "I am known for my speeches at the United Nations"
+                ],
+                "image": "https://example.com/netanyahu.jpg"
+            },
+            {
+                "id": "finkelstein",
+                "name": "Norman Finkelstein",
+                "period": "Modern Era",
+                "facts": [
+                    "American political scientist",
+                    "Known for his work on the Israeli-Palestinian conflict",
+                    "Author of several controversial books"
+                ],
+                "hints": [
+                    "I am a political scientist",
+                    "I have written extensively on the Israeli-Palestinian conflict",
+                    "I am known for my critical views on Israeli policies"
+                ],
+                "image": "https://example.com/finkelstein.jpg"
+            },
+            {
+                "id": "shakespeare",
+                "name": "William Shakespeare",
+                "period": "Renaissance (1564-1616)",
+                "facts": [
+                    "English playwright and poet",
+                    "Wrote 'Hamlet' and 'Romeo and Juliet'",
+                    "Known as the Bard of Avon"
+                ],
+                "hints": [
+                    "I am an English playwright",
+                    "I wrote 'To be, or not to be'",
+                    "My works are performed worldwide"
+                ],
+                "image": "https://example.com/shakespeare.jpg"
+            },
+            {
+                "id": "musk",
+                "name": "Elon Musk",
+                "period": "Modern Era",
+                "facts": [
+                    "CEO of SpaceX and Tesla",
+                    "Known for his work in space exploration",
+                    "Advocate for renewable energy"
+                ],
+                "hints": [
+                    "I am a tech entrepreneur",
+                    "I founded a company that aims to colonize Mars",
+                    "I am known for my electric cars"
+                ],
+                "image": "https://example.com/musk.jpg"
+            },
+            {
+                "id": "hitler",
+                "name": "Adolf Hitler",
+                "period": "World War II Era",
+                "facts": [
+                    "Leader of Nazi Germany",
+                    "Initiated World War II",
+                    "Responsible for the Holocaust"
+                ],
+                "hints": [
+                    "I was a dictator in Germany",
+                    "I led the country during World War II",
+                    "I am infamous for my role in the Holocaust"
+                ],
+                "image": "https://example.com/hitler.jpg"
+            }
+        ]
+    }
+]
