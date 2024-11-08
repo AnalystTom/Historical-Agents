@@ -27,5 +27,6 @@ class Debater1Crew:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
+            memory=True,
             verbose=True,
         )
