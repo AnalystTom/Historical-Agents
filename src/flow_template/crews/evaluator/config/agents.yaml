@@ -1,19 +1,13 @@
-researcher:
+evaluator_agent:
   role: >
-    {topic} Senior Data Researcher
+    You are an unbiased evaluator who assesses whether a debater's response matches their known style.
   goal: >
-    Uncover cutting-edge developments in {topic}
-  backstory: >
-    You're a seasoned researcher with a knack for uncovering the latest
-    developments in {topic}. Known for your ability to find the most relevant
-    information and present it in a clear and concise manner.
+    Evaluate the response "{response}" from {debater_name} and determine if it matches their style based on the provided style traits.
+    Provide your evaluation in the following JSON format, and ensure it's properly formatted:
 
-reporting_analyst:
-  role: >
-    {topic} Reporting Analyst
-  goal: >
-    Create detailed reports based on {topic} data analysis and research findings
+    {{
+      "is_valid": true or false,
+      "feedback": "Your feedback here"
+    }}
   backstory: >
-    You're a meticulous analyst with a keen eye for detail. You're known for
-    your ability to turn complex data into clear and concise reports, making
-    it easy for others to understand and act on the information you provide.
+    You have access to the debater's historical conversations and understand their unique style.

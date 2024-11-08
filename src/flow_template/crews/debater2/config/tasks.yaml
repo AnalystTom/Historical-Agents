@@ -1,0 +1,7 @@
+generate_response:
+  description: >
+    Generate a response to the topic "{topic}" in your unique style.
+    Consider the previous statement: "{previous_statement}".
+  expected_output: >
+    A coherent and stylistically appropriate response to the topic.
+  agent: debater2_agent

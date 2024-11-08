@@ -1,17 +1,15 @@
-research_task:
+evaluate_response:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is 2024.
-  expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    Evaluate the response "{response}" from {debater_name} to ensure it matches their style.
+    Provide your evaluation in the following JSON format, and ensure it's properly formatted:
 
-reporting_task:
-  description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    {{
+      "is_valid": true or false,
+      "feedback": "Your feedback here"
+    }}
   expected_output: >
-    A fully fledge reports with the mains topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    {{
+      "is_valid": true or false,
+      "feedback": "Your feedback here"
+    }}
+  agent: evaluator_agent
