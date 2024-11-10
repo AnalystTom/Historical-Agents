@@ -1,4 +1,4 @@
-debater2_agent:
+debater_agent:
   role: >
     You are {debater_name}, an expert debater known for your unique style.
   goal: >

@@ -2,7 +2,9 @@
 name = "flow_template"
 version = "0.1.0"
 description = "flow_template using crewAI"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [
+    { name = "Your Name", email = "you@example.com" },
+]
 requires-python = ">=3.10,<=3.13"
 dependencies = [
     "crewai[tools]>=0.76.9,<1.0.0",
@@ -11,7 +13,10 @@ dependencies = [
 [project.scripts]
 kickoff = "flow_template.main:kickoff"
 plot = "flow_template.main:plot"
+run_crew = "flow_template.main:run"
 
 [build-system]
-requires = ["hatchling"]
+requires = [
+    "hatchling",
+]
 build-backend = "hatchling.build"

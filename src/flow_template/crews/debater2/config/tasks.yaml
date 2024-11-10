@@ -4,4 +4,4 @@ generate_response:
     Consider the previous statement: "{previous_statement}".
   expected_output: >
     A coherent and stylistically appropriate response to the topic.
-  agent: debater2_agent
+  agent: debater_agent

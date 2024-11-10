@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from crewai.flow.flow import Flow, listen, start, router
+from crewai.flow.flow import Flow, listen, start, router, or_
 from .crews.debater1.debater1_crew import Debater1Crew
 from .crews.debater2.debater2_crew import Debater2Crew
 from .crews.evaluator.evaluator_crew import EvaluatorCrew
@@ -26,20 +26,12 @@ class DebateFlow(Flow[DebateState]):
         self.state.iteration = 0
         self.state.next_debater = self.state.debater1_name
         self.state.previous_statement = ""
-        return "next_turn"
+        #return "next_turn"
+        self.next_debater()
+    
 
-    @router(kickoff_debate)
-    def next_turn(self):
-        if self.state.iteration >= self.state.max_iterations:
-            return "end_debate"
-        else:
-            if self.state.next_debater == self.state.debater1_name:
-                return "debater1_turn"
-            else:
-                return "debater2_turn"
-
-    @listen("debater1_turn")
-    def debater1_turn(self):
+    #@listen("debater1_turn")
+    def debater1(self):
         print(f"{self.state.debater1_name}'s turn.")
         # Load style traits
         debater_name = self.state.debater1_name
@@ -80,14 +72,20 @@ class DebateFlow(Flow[DebateState]):
             self.save_conversation()
             self.state.previous_statement = response
             self.state.next_debater = self.state.debater2_name
+            # print("next", self.state.next_debater)
         else:
             print(f"Evaluator rejected {debater_name}'s response. Feedback: {feedback}")
-            return "end_debate"
+            # return "end_debate"
+            self.end_debate()
         self.state.iteration += 1
-        return "next_turn"
+        print("Iteration: ",self.state.iteration)
+        print("Passing the baton to debator 2")
+        #return "next_turn"
+        #return "debater2_turn"
+        self.next_debater()
 
-    @listen("debater2_turn")
-    def debater2_turn(self):
+    #@listen(debater1)
+    def debater2(self):
         print(f"{self.state.debater2_name}'s turn.")
         # Load style traits
         debater_name = self.state.debater2_name
@@ -130,11 +128,16 @@ class DebateFlow(Flow[DebateState]):
             self.state.next_debater = self.state.debater1_name
         else:
             print(f"Evaluator rejected {debater_name}'s response. Feedback: {feedback}")
-            return "end_debate"
+            # return "end_debate"
+            self.end_debate()
         self.state.iteration += 1
-        return "next_turn"
+        print("Iteration: ",self.state.iteration)
+        print("Passing the baton to debator 1")
+        #return "next_turn"
+        #return "debater1_turn"
+        self.next_debater()
 
-    @listen("end_debate")
+    #@listen("end_debate")
     def end_debate(self):
         print("Debate ended.")
         self.save_conversation(final=True)
@@ -145,6 +148,20 @@ class DebateFlow(Flow[DebateState]):
         with open(filename, "w") as f:
             for entry in self.state.conversation_history:
                 f.write(f"{entry['debater']}: {entry['statement']}\n")
+
+    
+    #@router(kickoff_debate)
+    def next_debater(self):
+        if self.state.iteration >= self.state.max_iterations:
+            #return "end_debate"
+            self.end_debate()
+        else:
+            if self.state.next_debater == self.state.debater1_name:
+                #return "debater1_turn"
+                self.debater1()
+            else:
+                #return "debater2_turn"
+                self.debater2()
 
 def kickoff():
     topic = input("Enter the debate topic: ")
