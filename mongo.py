@@ -1,7 +1,8 @@
 from pymongo import MongoClient
+import certifi
 
 #Replace <db_username> and <db_password> with your actual username and password
-client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority", tlsCAFile=certifi.where())
 
 #Specify database and collection
 db = client["personaDB"]
