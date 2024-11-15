@@ -30,34 +30,41 @@ crewai install
 
 **Add your `OPENAI_API_KEY` into the `.env` file**
 
-- Modify `src/flow_template/config/agents.yaml` to define your agents
+- Modify `src/flow_template/crews/crew_name/config/agents.yaml` to define your agents
 - Modify `src/flow_template/config/tasks.yaml` to define your tasks
 - Modify `src/flow_template/crew.py` to add your own logic, tools and specific args
 - Modify `src/flow_template/main.py` to add custom inputs for your agents and tasks
 
-## Running the Project
 
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+## Starting the Backend Server
+From the root directory of your project, run the following command to start the backend server:
 
 ```bash
-crewai run
+uvicorn src.flow_template.main:app --reload
 ```
+This command initializes the FastAPI application, which handles WebSocket connections and facilitates the AI debate logic.
 
-This command initializes the flow_template Crew, assembling the agents and assigning them tasks as defined in your configuration.
+## Launching the Frontend Interface
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+Open the Frontend File
 
-## Understanding Your Crew
+- Locate the index.html file in your project directory.
+- Open the file in a web browser (e.g., Chrome, Firefox).
+- Fill in the debate topic, debater names, and the maximum number of iterations.
+- Click the "Start Debate" button to initiate the debate session.
 
-The flow_template Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
 
-## Support
 
-For support, questions, or feedback regarding the {{crew_name}} Crew or crewAI.
+Note: Ensure the backend server is running before starting the debate.
 
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
 
-Let's create wonders together with the power and simplicity of crewAI.
+------------------------------------------------------------------------------------
+
+
+## To DO
+
+- Memory Management
+- Fetching Input style details or relevant information from MongoDB
+- Finalize number of crews, agents in each crew, tasks for each agents.
+
+
