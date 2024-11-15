@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debate</title>
+</head>
+<body>
+    <h1>Debate Session</h1>
+    <div id="messages"></div>
+    <script>
+        let ws = new WebSocket("ws://localhost:8000/debate");
+
+        ws.onopen = function() {
+            // Send initial data
+            ws.send(JSON.stringify({
+                "topic": "AI in Football?",
+                "debater1_name": "messi",
+                "debater2_name": "ronaldo",
+                "max_iterations": 3
+            }));
+        };
+
+        ws.onmessage = function(event) {
+            let data = JSON.parse(event.data);
+            let messagesDiv = document.getElementById("messages");
+
+            if (data.event === "debate_ended") {
+                messagesDiv.innerHTML += "<p><strong>Debate Ended</strong></p>";
+            } else if (data.error) {
+                messagesDiv.innerHTML += `<p><strong>${data.debater}:</strong> ${data.error}</p>`;
+            } else {
+                messagesDiv.innerHTML += `<p><strong>${data.debater}:</strong> ${data.statement}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
