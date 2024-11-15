@@ -1,7 +1,8 @@
 generate_response:
   description: >
-    Generate a response to the topic "{topic}" in your unique style.
+    Generate a concise and impactful response to the topic "{topic}" in your unique style.
+    **Your response should be clear, crisp, and no longer than 5 sentences.**
     Consider the previous statement: "{previous_statement}".
   expected_output: >
-    A coherent and stylistically appropriate response to the topic.
+    A coherent, stylistically appropriate response to the topic that is no longer than 5 sentences.
   agent: debater_agent
