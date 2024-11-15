@@ -30,10 +30,10 @@ crewai install
 
 **Add your `OPENAI_API_KEY` into the `.env` file**
 
-- Modify `src/flow_template/crews/crew_name/config/agents.yaml` to define your agents
-- Modify `src/flow_template/config/tasks.yaml` to define your tasks
+- Modify `src/flow_template/crews/{crew_name}/config/agents.yaml` to define your agents
+- Modify `src/flow_template/crews/{crew_name}/config/tasks.yaml` to define your tasks
+- Modify `src/flow_template/crews/main.py` to add custom inputs for your agents and tasks
 - Modify `src/flow_template/crew.py` to add your own logic, tools and specific args
-- Modify `src/flow_template/main.py` to add custom inputs for your agents and tasks
 
 
 ## Starting the Backend Server
