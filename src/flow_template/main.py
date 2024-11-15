@@ -35,7 +35,7 @@ class DebateFlow(Flow[DebateState]):
         self.state.previous_statement = ""
         return "debater1_turn"
 
-    @listen(or_("kickoff_debate", "debater1_turn"))
+    @listen(or_("kickoff_debate", "check_iteration"))
     async def debater1_turn(self):
         # Debater 1's turn
         print(f"{self.state.debater1_name}'s turn.")
