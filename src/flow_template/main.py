@@ -1,14 +1,26 @@
 from pydantic import BaseModel
-from crewai.flow.flow import Flow, listen, start,or_
+from crewai.flow.flow import Flow, listen, start
 from .crews.debater1.debater1_crew import Debater1Crew
 from .crews.debater2.debater2_crew import Debater2Crew
 from .crews.evaluator.evaluator_crew import EvaluatorCrew
 import json
 import os
-
+import asyncio  # Import asyncio for asynchronous operations
 # Import FastAPI and WebSockets
 from fastapi import FastAPI, WebSocket
 import uvicorn
+import logging  # Import logging module
+
+# Import OpenTelemetry modules
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+
+# Initialize the TracerProvider only once
+trace.set_tracer_provider(TracerProvider())
+
+# Set logging level to suppress OpenTelemetry warnings
+logging.getLogger('opentelemetry').setLevel(logging.ERROR)
+
 
 app = FastAPI()
 
@@ -26,6 +38,12 @@ class DebateFlow(Flow[DebateState]):
     def __init__(self, websocket: WebSocket):
         super().__init__()
         self.websocket = websocket  # Store websocket as an instance variable
+        self.debate_finished = asyncio.Event()  # Event to signal when debate is over
+
+        # Instantiate crew instances once
+        self.debater1 = Debater1Crew()
+        self.debater2 = Debater2Crew()
+        self.evaluator = EvaluatorCrew()
 
     @start()
     async def kickoff_debate(self):
@@ -33,45 +51,48 @@ class DebateFlow(Flow[DebateState]):
         print(f"Debate started on topic: {self.state.topic}")
         self.state.iteration = 0
         self.state.previous_statement = ""
-        return "debater1_turn"
+        # Schedule debater1's turn without awaiting
+        asyncio.create_task(self.debater1_turn())
 
-    @listen(or_("kickoff_debate", "check_iteration"))
     async def debater1_turn(self):
         # Debater 1's turn
         print(f"{self.state.debater1_name}'s turn.")
         debater_name = self.state.debater1_name
-        response = await self._get_response(debater_name, Debater1Crew)
+        response = await self._get_response(debater_name, self.debater1)
 
         if response:
             self.state.previous_statement = response
-            return "debater2_turn"
+            # Schedule debater2's turn
+            asyncio.create_task(self.debater2_turn())
         else:
-            return "end_debate"
+            # Schedule end of debate
+            asyncio.create_task(self.end_debate())
 
-    @listen("debater1_turn")
     async def debater2_turn(self):
         # Debater 2's turn
         print(f"{self.state.debater2_name}'s turn.")
         debater_name = self.state.debater2_name
-        response = await self._get_response(debater_name, Debater2Crew)
+        response = await self._get_response(debater_name, self.debater2)
 
         if response:
             self.state.previous_statement = response
-            return "check_iteration"
+            # Schedule check_iteration
+            asyncio.create_task(self.check_iteration())
         else:
-            return "end_debate"
+            # Schedule end of debate
+            asyncio.create_task(self.end_debate())
 
-    @listen("debater2_turn")
     async def check_iteration(self):
         # Check if maximum iterations reached
         self.state.iteration += 1
         print(f"Iteration completed: {self.state.iteration}")
         if self.state.iteration >= self.state.max_iterations:
-            return "end_debate"
+            # Schedule end of debate
+            asyncio.create_task(self.end_debate())
         else:
-            return "debater1_turn"
+            # Schedule debater1's turn
+            asyncio.create_task(self.debater1_turn())
 
-    @listen("end_debate")
     async def end_debate(self):
         # End the debate
         print("Debate ended.")
@@ -79,8 +100,10 @@ class DebateFlow(Flow[DebateState]):
         # Notify frontend that debate has ended
         if self.websocket:
             await self.websocket.send_json({"event": "debate_ended"})
+        # Signal that the debate is finished
+        self.debate_finished.set()
 
-    async def _get_response(self, debater_name, DebaterCrew):
+    async def _get_response(self, debater_name, debater_instance):
         """Helper method to handle debater response and evaluation."""
         filename = f'data/{debater_name.lower().replace(" ", "_")}_style.json'
         try:
@@ -91,9 +114,9 @@ class DebateFlow(Flow[DebateState]):
             print(f"Style file not found for {debater_name}.")
             style_traits = []
 
-        # Get response from the debater
-        debater = DebaterCrew()
-        result = debater.crew().kickoff(inputs={
+        # Get response from the debater in an executor
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, debater_instance.crew().kickoff, {
             "debater_name": debater_name,
             "style_traits": style_traits,
             "topic": self.state.topic,
@@ -101,9 +124,8 @@ class DebateFlow(Flow[DebateState]):
         })
         response = result.raw.strip()
 
-        # Evaluate the response
-        evaluator = EvaluatorCrew()
-        eval_result = evaluator.crew().kickoff(inputs={
+        # Evaluate the response in an executor
+        eval_result = await loop.run_in_executor(None, self.evaluator.crew().kickoff, {
             "debater_name": debater_name,
             "response": response
         })
@@ -123,7 +145,7 @@ class DebateFlow(Flow[DebateState]):
                 "statement": response
             })
             self.save_conversation()
-            # Send response to frontend
+            # Send response to frontend immediately
             if self.websocket:
                 await self.websocket.send_json({
                     "debater": debater_name,
@@ -132,7 +154,7 @@ class DebateFlow(Flow[DebateState]):
             return response
         else:
             print(f"Evaluator rejected {debater_name}'s response. Feedback: {feedback}")
-            # Send rejection to frontend
+            # Send rejection to frontend immediately
             if self.websocket:
                 await self.websocket.send_json({
                     "debater": debater_name,
@@ -168,6 +190,12 @@ async def debate_endpoint(websocket: WebSocket):
     # Run the flow
     await debate_flow.kickoff_async()
 
-# You can run the server using uvicorn
+    # Wait for the debate to finish before closing the WebSocket
+    await debate_flow.debate_finished.wait()
+
+    # Close the WebSocket connection
+    await websocket.close()
+
+# Run the server
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)

@@ -62,5 +62,5 @@ class Debater1Crew:
     #             #dimension=embedder["dimension"],
     #             ),
     # ),
-            verbose=True,
+            verbose=False,
         )

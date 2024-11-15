@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Debate</title>
+    <title>Debate Session</title>
     <style>
+        /* [Your existing CSS styles remain unchanged] */
         body {
             font-family: Arial, sans-serif;
             margin: 0; /* Remove default margin */
@@ -89,11 +90,14 @@
         .debate-started, .debate-ended {
             text-align: center;
             font-weight: bold;
-            color: #28a745; /* Green for started */
             margin-bottom: 20px;
+        }
+        .debate-started {
+            color: #28a745; /* Green for started */
         }
         .debate-ended {
             color: #FF0000; /* Red for ended */
+            margin-top: 20px; /* Add margin to separate from previous messages */
         }
         /* Scrollbar styling */
         #messages::-webkit-scrollbar {
@@ -152,7 +156,10 @@
             let max_iterations = parseInt(document.getElementById('iterations').value);
 
             let messagesDiv = document.getElementById("messages");
-            messagesDiv.innerHTML = "<p class='debate-started'>Debate Started</p>";
+            messagesDiv.innerHTML = ""; // Clear previous messages
+
+            // Display "Debate Started" message
+            addSystemMessage("Debate Started", "debate-started");
 
             // Initialize WebSocket
             ws = new WebSocket("ws://localhost:8000/debate");
@@ -171,10 +178,13 @@
                 let data = JSON.parse(event.data);
 
                 if (data.event === "debate_ended") {
-                    messagesDiv.innerHTML += "<p class='debate-ended'>Debate Ended</p>";
+                    addSystemMessage("Debate Ended", "debate-ended");
                 } else if (data.error) {
                     // Handle errors (e.g., evaluator rejected the response)
-                    messagesDiv.innerHTML += `<div class="message debater-error"><strong>${data.debater}:</strong> ${data.error}</div>`;
+                    let errorDiv = document.createElement('div');
+                    errorDiv.classList.add('message', 'debater-error');
+                    errorDiv.innerHTML = `<strong>${data.debater}:</strong> ${data.error}`;
+                    messagesDiv.appendChild(errorDiv);
                 } else {
                     // Display debater messages
                     let messageDiv = document.createElement('div');
@@ -205,6 +215,18 @@
                 console.error("WebSocket error:", error);
             };
         });
+
+        // Helper function to add system messages
+        function addSystemMessage(message, className) {
+            const messagesDiv = document.getElementById("messages");
+            const systemMessage = document.createElement('p');
+            systemMessage.classList.add(className);
+            systemMessage.textContent = message;
+            messagesDiv.appendChild(systemMessage);
+
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
     </script>
 </body>
 </html>
