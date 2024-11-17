@@ -1,0 +1,20 @@
+[project]
+name = "debate"
+version = "0.1.0"
+description = "debate using crewAI"
+authors = [{ name = "Jyothish", email = "jkcg.learning@gmail.com" }]
+requires-python = ">=3.10,<=3.13"
+dependencies = [
+    "crewai[tools]>=0.76.9,<1.0.0"
+]
+
+[project.scripts]
+debate = "debate.main:run"
+run_crew = "debate.main:run"
+train = "debate.main:train"
+replay = "debate.main:replay"
+test = "debate.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -9,6 +9,8 @@ export default function DebatePage() {
   const [gameMode, setGameMode] = useState<string | null>(null)
   const [topic, setTopic] = useState<string | null>(null)
   const [debaters, setDebaters] = useState<Debater[]>([])
+  const [debateMessages, setDebateMessages] = useState<string[]>([]) // Step 1: Add state for messages
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0) // Step 1: Add index for current message
   const [isReady, setIsReady] = useState(false)
   const router = useRouter()
 
@@ -25,10 +27,16 @@ export default function DebatePage() {
     } else {
       setGameMode(storedGameMode)
       setTopic(storedTopic)
-      // For simplicity, we're using the debater IDs as the full debater objects.
-      // In a real application, you'd fetch the full debater details here.
       setDebaters(storedDebaters.map((id: string) => ({ id, name: id, image: `/placeholder.svg?height=100&width=100` })))
       setIsReady(true)
+
+      // Example: Initialize debateMessages for demonstration
+      setDebateMessages([
+        "Pro-Israel: Israel has the right to defend itself against aggression.",
+        "Pro-Palestine: The occupation of Palestinian territories is unjust.",
+        "Pro-Israel: Security is essential for Israel's survival.",
+        "Pro-Palestine: Palestinians have the right to freedom and self-determination."
+      ]) // Step 1: Initialize with sample messages
     }
   }, [router])
 
@@ -44,6 +52,7 @@ export default function DebatePage() {
         gameMode={gameMode!}
         topic={topic!}
         debaters={debaters}
+        currentMessage={debateMessages[currentMessageIndex]} // Step 1: Pass only the current message
       />
     </div>
   )
