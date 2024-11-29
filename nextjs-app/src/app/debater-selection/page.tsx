@@ -55,90 +55,107 @@ const debaters: Debater[] = [
     }
   ]
 
-export default function DebaterSelection() {
-  const [selectedDebaters, setSelectedDebaters] = useState<string[]>([])
-  const [gameMode, setGameMode] = useState<string | null>(null)
-  const [topic, setTopic] = useState<string | null>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    const storedGameMode = localStorage.getItem('selectedGameMode')
-    const storedTopic = localStorage.getItem('selectedTopic')
-    if (!storedGameMode || !storedTopic) {
-      console.log('Missing game mode or topic, redirecting to home...')
-      router.push('/')
-    } else {
-      setGameMode(storedGameMode)
-      setTopic(storedTopic)
-      console.log(`Game mode: ${storedGameMode}, Topic: ${storedTopic}`)
-    }
-  }, [router])
-
-  const handleDebaterSelect = (debaterId: string) => {
-    setSelectedDebaters(prev => {
-      if (prev.includes(debaterId)) {
-        return prev.filter(id => id !== debaterId)
-      } else if (gameMode === 'ai-vs-ai' && prev.length < 2) {
-        return [...prev, debaterId]
-      } else if (gameMode === 'you-vs-ai' && prev.length < 1) {
-        return [debaterId]
+  export default function DebaterSelection() {
+    const [selectedDebaters, setSelectedDebaters] = useState<string[]>([]);
+    const [customDebater1, setCustomDebater1] = useState<string>('');
+    const [customDebater2, setCustomDebater2] = useState<string>('');
+    const [gameMode, setGameMode] = useState<string | null>(null);
+    const [topic, setTopic] = useState<string | null>(null);
+    const router = useRouter();
+  
+    useEffect(() => {
+      const storedGameMode = localStorage.getItem('selectedGameMode');
+      const storedTopic = localStorage.getItem('selectedTopic');
+      if (!storedGameMode || !storedTopic) {
+        console.log('Missing game mode or topic, redirecting to home...');
+        router.push('/');
+      } else {
+        setGameMode(storedGameMode);
+        setTopic(storedTopic);
+        console.log(`Game mode: ${storedGameMode}, Topic: ${storedTopic}`);
       }
-      return prev
-    })
-  }
-
-  const handleContinue = () => {
-    if ((gameMode === 'ai-vs-ai' && selectedDebaters.length === 2) || 
-        (gameMode === 'you-vs-ai' && selectedDebaters.length === 1)) {
-      console.log('Selected debaters:', selectedDebaters)
-      localStorage.setItem('selectedDebaters', JSON.stringify(selectedDebaters))
-      router.push('/debate-interface')
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
-      <motion.h1 
-        className="text-4xl md:text-5xl font-serif mb-4 text-center"
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {gameMode === 'ai-vs-ai' ? 'Select Two Debaters' : 'Select Your Opponent'}
-      </motion.h1>
-      <motion.p
-        className="text-xl mb-8 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        Topic: {topic}
-      </motion.p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-        {debaters.map((debater) => (
-          <DebaterCard
-            key={debater.id}
-            debater={debater}
-            isSelected={selectedDebaters.includes(debater.id)}
-            onSelect={() => handleDebaterSelect(debater.id)}
-          />
-        ))}
-      </div>
-      <motion.div
-        className="mt-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <Button 
-          size="lg" 
-          onClick={handleContinue}
-          disabled={(gameMode === 'ai-vs-ai' && selectedDebaters.length !== 2) || 
-                    (gameMode === 'you-vs-ai' && selectedDebaters.length !== 1)}
+    }, [router]);
+  
+    const handleDebaterSelect = (debaterId: string) => {
+      setSelectedDebaters(prev => {
+        if (prev.includes(debaterId)) {
+          return prev.filter(id => id !== debaterId);
+        } else if (gameMode === 'ai-vs-ai' && prev.length < 2) {
+          return [...prev, debaterId];
+        } else if (gameMode === 'you-vs-ai' && prev.length < 1) {
+          return [debaterId];
+        }
+        return prev;
+      });
+    };
+  
+    const handleContinue = () => {
+      const debatersToUse = customDebater1 && customDebater2 ? [customDebater1, customDebater2] : selectedDebaters;
+      if ((gameMode === 'ai-vs-ai' && debatersToUse.length === 2) || 
+          (gameMode === 'you-vs-ai' && debatersToUse.length === 1)) {
+        console.log('Selected debaters:', debatersToUse);
+        localStorage.setItem('selectedDebaters', JSON.stringify(debatersToUse));
+        router.push('/debate-interface');
+      }
+    };
+  
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
+        <motion.h1 
+          className="text-4xl md:text-5xl font-serif mb-4 text-center"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          Start Debate
-        </Button>
-      </motion.div>
-    </div>
-  )
-}
+          {gameMode === 'ai-vs-ai' ? 'Select Two Debaters' : 'Select Your Opponent'}
+        </motion.h1>
+        <motion.p
+          className="text-xl mb-8 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          Topic: {topic}
+        </motion.p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+          {debaters.map((debater) => (
+            <DebaterCard
+              key={debater.id}
+              debater={debater}
+              isSelected={selectedDebaters.includes(debater.id)}
+              onSelect={() => handleDebaterSelect(debater.id)}
+            />
+          ))}
+        </div>
+        <input
+          type="text"
+          placeholder="Enter first custom debater"
+          value={customDebater1}
+          onChange={(e) => setCustomDebater1(e.target.value)}
+          className="mt-4 p-2 bg-gray-800 text-white rounded"
+        />
+        <input
+          type="text"
+          placeholder="Enter second custom debater"
+          value={customDebater2}
+          onChange={(e) => setCustomDebater2(e.target.value)}
+          className="mt-4 p-2 bg-gray-800 text-white rounded"
+        />
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Button 
+            size="lg" 
+            onClick={handleContinue}
+            disabled={(gameMode === 'ai-vs-ai' && selectedDebaters.length !== 2 && (!customDebater1 || !customDebater2)) || 
+                      (gameMode === 'you-vs-ai' && selectedDebaters.length !== 1 && !customDebater1)}
+          >
+            Start Debate
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }

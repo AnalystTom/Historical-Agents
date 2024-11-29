@@ -14,31 +14,15 @@ interface DebateChatInterfaceProps {
   gameMode: string
   topic: string
   debaters: Debater[]
+  messages: Message[] // Accept messages as a prop
 }
 
-export function DebateChatInterface({ gameMode, topic, debaters }: DebateChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+export function DebateChatInterface({ gameMode, topic, debaters, messages }: DebateChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [currentTurn, setCurrentTurn] = useState<string>(debaters[0].id)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const ws = useRef<WebSocket | null>(null)
-
-  useEffect(() => {
-    // WebSocket connection logic (unchanged)
-    // ...
-
-    // Add some initial messages for testing
-    setMessages([
-      { id: '1', sender: 'system', content: `Welcome to the debate on "${topic}"`, timestamp: new Date() },
-      { id: '2', sender: debaters[0].id, content: 'Thank you for having me. I\'m ready to begin the debate.', timestamp: new Date() },
-      { id: '3', sender: debaters[1]?.id || 'user', content: 'I appreciate the opportunity to discuss this important topic.', timestamp: new Date() },
-    ])
-
-    return () => {
-      ws.current?.close()
-    }
-  }, [gameMode, topic, debaters])
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -54,7 +38,7 @@ export function DebateChatInterface({ gameMode, topic, debaters }: DebateChatInt
         content: inputMessage,
         timestamp: new Date()
       }
-      setMessages((prevMessages) => [...prevMessages, newMessage])
+      // Assuming you have a function to send messages via WebSocket
       ws.current?.send(JSON.stringify(newMessage))
       setInputMessage('')
       

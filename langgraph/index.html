@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debate Session</title>
     <style>
-        /* [Your existing CSS styles remain unchanged] */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -168,12 +169,10 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        count: 0,
-                        history: "Nothing",
-                        current_response: "",
                         debate_topic: topic,
                         debater1: debater1_name,
-                        debater2: debater2_name
+                        debater2: debater2_name,
+                        max_iterations: max_iterations
                     })
                 });
 
@@ -182,16 +181,28 @@
                 }
 
                 const data = await response.json();
-                addSystemMessage("Debate Ended", "debate-ended");
 
-                // Display the history
-                const history = data.history.split('\n');
-                history.forEach(line => {
+                // Display the greetings
+                addSystemMessage(data.greetings, "debate-started");
+
+                // Display the conversation
+                data.conversation.forEach(message => {
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('message');
-                    messageDiv.textContent = line;
+                    messageDiv.textContent = `${message.speaker}: ${message.content}`;
                     messagesDiv.appendChild(messageDiv);
                 });
+
+                // Display the debate history
+                data.debate_history.forEach(history => {
+                    const historyDiv = document.createElement('div');
+                    historyDiv.classList.add('message');
+                    historyDiv.textContent = history;
+                    messagesDiv.appendChild(historyDiv);
+                });
+
+                // Display "Debate Ended" message
+                addSystemMessage("Debate Ended", "debate-ended");
 
             } catch (error) {
                 console.error('There was a problem with the fetch operation:', error);

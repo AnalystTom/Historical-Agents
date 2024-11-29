@@ -1,59 +1,85 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { DebateChatInterface } from '@/components/debate-chat-interface'
-import { Debater } from '@/types'
+import { useState, useEffect } from 'react';
+import { DebateChatInterface } from '@/components/debate-chat-interface';
+import { Debater, Message } from '@/types';
 
 export default function DebatePage() {
-  const [gameMode, setGameMode] = useState<string | null>(null)
-  const [topic, setTopic] = useState<string | null>(null)
-  const [debaters, setDebaters] = useState<Debater[]>([])
-  const [debateMessages, setDebateMessages] = useState<string[]>([]) // Step 1: Add state for messages
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0) // Step 1: Add index for current message
-  const [isReady, setIsReady] = useState(false)
-  const router = useRouter()
+  const [greetings, setGreetings] = useState<string>('');
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const [debateHistory, setDebateHistory] = useState<string[]>([]);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const storedGameMode = localStorage.getItem('selectedGameMode')
-    const storedTopic = localStorage.getItem('selectedTopic')
-    const storedDebaters = JSON.parse(localStorage.getItem('selectedDebaters') || '[]')
+    const fetchDebateData = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/trigger_workflow', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            debate_topic: 'AI in Football?',
+            debater1: 'benjamin-netanyahu',
+            debater2: 'yair-lapid',
+            max_iterations: 3
+          })
+        });
 
-    console.log('Stored data:', { storedGameMode, storedTopic, storedDebaters })
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
 
-    if (!storedGameMode || !storedTopic || storedDebaters.length === 0) {
-      console.log('Missing data, redirecting to home')
-      router.push('/')
-    } else {
-      setGameMode(storedGameMode)
-      setTopic(storedTopic)
-      setDebaters(storedDebaters.map((id: string) => ({ id, name: id, image: `/placeholder.svg?height=100&width=100` })))
-      setIsReady(true)
+        const data = await response.json();
+        setGreetings(data.greetings);
+        setConversation(data.conversation.map((msg: any, index: number) => ({
+          id: index.toString(),
+          sender: msg.speaker,
+          content: msg.content,
+          timestamp: new Date()
+        })));
+        setDebateHistory(data.debate_history);
+        setIsReady(true);
+      } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    };
 
-      // Example: Initialize debateMessages for demonstration
-      setDebateMessages([
-        "Pro-Israel: Israel has the right to defend itself against aggression.",
-        "Pro-Palestine: The occupation of Palestinian territories is unjust.",
-        "Pro-Israel: Security is essential for Israel's survival.",
-        "Pro-Palestine: Palestinians have the right to freedom and self-determination."
-      ]) // Step 1: Initialize with sample messages
-    }
-  }, [router])
+    fetchDebateData();
+  }, []);
 
   if (!isReady) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <p className="text-2xl font-bold">Loading debate...</p>
-    </div>
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-2xl font-bold">Loading debate...</p>
+      </div>
+    );
   }
+
+  const debaters: Debater[] = [
+    { id: 'benjamin-netanyahu', name: 'Benjamin Netanyahu', image: '/benjamin-netanyahu.jpg' },
+    { id: 'yair-lapid', name: 'Yair Lapid', image: '/yair-lapid.jpg' }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
+      <h1 className="text-2xl font-bold mb-4">Debate Session</h1>
+      <div className="mb-4">
+        <p className="font-bold">Greetings:</p>
+        <p>{greetings}</p>
+      </div>
       <DebateChatInterface 
-        gameMode={gameMode!}
-        topic={topic!}
+        gameMode="ai-vs-ai"
+        topic="AI in Football?"
         debaters={debaters}
-        currentMessage={debateMessages[currentMessageIndex]} // Step 1: Pass only the current message
+        messages={conversation}
       />
+      <div>
+        <p className="font-bold">Debate History:</p>
+        {debateHistory.map((history, index) => (
+          <p key={index} className="bg-gray-200 p-2 rounded mb-2">{history}</p>
+        ))}
+      </div>
     </div>
-  )
+  );
 }

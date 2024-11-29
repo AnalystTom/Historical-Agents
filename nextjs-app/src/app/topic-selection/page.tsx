@@ -13,22 +13,24 @@ const topics: Topic[] = [
 ]
 
 export default function TopicSelection() {
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
-  const router = useRouter()
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [customTopic, setCustomTopic] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
-    const gameMode = localStorage.getItem('selectedGameMode')
+    const gameMode = localStorage.getItem('selectedGameMode');
     if (!gameMode) {
-      router.push('/')
+      router.push('/');
     }
-  }, [router])
+  }, [router]);
 
   const handleContinue = () => {
-    if (selectedTopic) {
-      localStorage.setItem('selectedTopic', selectedTopic)
-      router.push('/debater-selection')
+    const topicToUse = customTopic || selectedTopic;
+    if (topicToUse) {
+      localStorage.setItem('selectedTopic', topicToUse);
+      router.push('/debater-selection');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
@@ -50,6 +52,13 @@ export default function TopicSelection() {
           />
         ))}
       </div>
+      <input
+        type="text"
+        placeholder="Or enter your own topic"
+        value={customTopic}
+        onChange={(e) => setCustomTopic(e.target.value)}
+        className="mt-4 p-2 bg-gray-800 text-white rounded"
+      />
       <motion.div
         className="mt-8"
         initial={{ opacity: 0 }}
@@ -59,11 +68,11 @@ export default function TopicSelection() {
         <Button 
           size="lg" 
           onClick={handleContinue}
-          disabled={!selectedTopic}
+          disabled={!selectedTopic && !customTopic}
         >
           Continue to Debater Selection
         </Button>
       </motion.div>
     </div>
-  )
+  );
 }
