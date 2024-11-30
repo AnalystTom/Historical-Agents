@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { DebaterCard } from '@/components/debater-card'
 import { Debater } from '@/types'
+import { useRouter } from 'next/navigation'; // Correct import for App Router
 
 const debaters: Debater[] = [
     {
@@ -95,7 +95,8 @@ const debaters: Debater[] = [
           (gameMode === 'you-vs-ai' && debatersToUse.length === 1)) {
         console.log('Selected debaters:', debatersToUse);
         localStorage.setItem('selectedDebaters', JSON.stringify(debatersToUse));
-        router.push('/debate-interface');
+        const queryString = `debate_topic=${encodeURIComponent(topic || '')}&debater1=${encodeURIComponent(debatersToUse[0])}&debater2=${encodeURIComponent(debatersToUse[1] || '')}`;
+        router.push(`/debate-interface?${queryString}`);
       }
     };
   

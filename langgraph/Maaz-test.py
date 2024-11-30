@@ -509,7 +509,7 @@ builder.add_edge("Debate Summarizer", END)
 debator = builder.compile(checkpointer=memory).with_config(run_name="Create podcast")
 
 # Display the graph
-# display(Image(debator.get_graph().draw_mermaid_png()))
+display(Image(debator.get_graph().draw_mermaid_png()))
 
 # state = {
 #     "topic": "Ukraine War",

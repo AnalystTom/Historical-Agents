@@ -1,34 +1,36 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Debater, Message } from '@/types'
-import { Mic, User } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Debater, Message } from '@/types';
+import { Mic, User } from 'lucide-react';
 
 interface DebateChatInterfaceProps {
-  gameMode: string
-  topic: string
-  debaters: Debater[]
-  messages: Message[] // Accept messages as a prop
+  gameMode: string;
+  topic: string;
+  debaters: Debater[];
+  messages: Message[];
 }
 
 export function DebateChatInterface({ gameMode, topic, debaters, messages }: DebateChatInterfaceProps) {
-  const [inputMessage, setInputMessage] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
-  const [currentTurn, setCurrentTurn] = useState<string>(debaters[0].id)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const ws = useRef<WebSocket | null>(null)
+  const [inputMessage, setInputMessage] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [currentTurn, setCurrentTurn] = useState<string>(debaters[0].id);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const ws = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
-  }, [messages])
+  const capitalizeName = (name: string) => {
+    return name.replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const getDebaterByName = (name: string) => {
+    return debaters.find((d) => d.id === name) || debaters[0];
+  };
 
   const handleSendMessage = () => {
     if (inputMessage.trim() && isConnected) {
@@ -36,22 +38,25 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
         id: Date.now().toString(),
         sender: gameMode === 'you-vs-ai' ? 'user' : 'moderator',
         content: inputMessage,
-        timestamp: new Date()
-      }
-      // Assuming you have a function to send messages via WebSocket
-      ws.current?.send(JSON.stringify(newMessage))
-      setInputMessage('')
-      
-      // Switch turns
-      setCurrentTurn(currentTurn === debaters[0].id ? debaters[1].id : debaters[0].id)
-    }
-  }
+        timestamp: new Date(),
+      };
+      ws.current?.send(JSON.stringify(newMessage));
+      setInputMessage('');
 
-  const getDebaterByName = (name: string) => debaters.find(d => d.id === name) || debaters[0]
+      // Switch turns
+      setCurrentTurn(currentTurn === debaters[0].id ? debaters[1].id : debaters[0].id);
+    }
+  };
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
-    <div className="min-h-screen bg-cover bg-center" style={{backgroundImage: "url('/debate-stage.jpg')"}}>
-      <Card className="w-full max-w-4xl mx-auto bg-black/70 text-white">
+    <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/debate-stage.jpg')" }}>
+      <Card className="w-full mx-auto bg-black/70 text-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
             {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
@@ -63,10 +68,10 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
             {debaters.map((debater) => (
               <div key={debater.id} className="flex flex-col items-center">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={debater.image} alt={debater.name} />
-                  <AvatarFallback>{debater.name[0]}</AvatarFallback>
+                  <AvatarImage src={debater.image} alt={capitalizeName(debater.name)} />
+                  <AvatarFallback>{capitalizeName(debater.name)[0]}</AvatarFallback>
                 </Avatar>
-                <span className="mt-2 font-semibold">{debater.name}</span>
+                <span className="mt-2 font-semibold">{capitalizeName(debater.name)}</span>
                 {currentTurn === debater.id && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -90,29 +95,43 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="mb-4"
                 >
-                  <div className={`flex ${message.sender === 'user' || message.sender === 'moderator' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex items-start max-w-[80%] ${message.sender === 'user' || message.sender === 'moderator' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div
+                    className={`flex ${
+                      message.sender === 'system'
+                        ? 'justify-center'
+                        : message.sender === debaters[0].id
+                        ? 'justify-start'
+                        : 'justify-end'
+                    }`}
+                  >
+                    <div
+                      className={`flex items-start max-w-[80%] ${
+                        message.sender === debaters[0].id ? 'flex-row' : 'flex-row-reverse'
+                      }`}
+                    >
                       <Avatar className="w-8 h-8">
-                        {message.sender === 'user' || message.sender === 'moderator' ? (
+                        {message.sender === 'system' ? (
                           <User className="w-6 h-6" />
                         ) : (
-                          <AvatarImage src={getDebaterByName(message.sender).image} alt={getDebaterByName(message.sender).name} />
+                          <AvatarImage
+                            src={getDebaterByName(message.sender).image}
+                            alt={getDebaterByName(message.sender).name}
+                          />
                         )}
                       </Avatar>
-                      <div 
+                      <div
                         className={`mx-2 p-3 rounded-lg ${
-                          message.sender === 'user' || message.sender === 'moderator'
-                            ? 'bg-blue-500 text-white' 
-                            : message.sender === 'system'
+                          message.sender === 'system'
                             ? 'bg-gray-500 text-white'
+                            : message.sender === debaters[0].id
+                            ? 'bg-blue-500 text-white'
                             : 'bg-gray-200 text-black'
                         }`}
                       >
                         <p className="font-semibold mb-1">
-                          {message.sender === 'user' ? 'You' : 
-                           message.sender === 'moderator' ? 'Moderator' : 
-                           message.sender === 'system' ? 'System' :
-                           getDebaterByName(message.sender).name}
+                          {message.sender === 'system'
+                            ? 'System'
+                            : getDebaterByName(message.sender).name}
                         </p>
                         <p>{message.content}</p>
                         <span className="text-xs opacity-70 mt-1 block">
@@ -128,13 +147,19 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
           <div className="flex items-center mt-4">
             <Input
               type="text"
-              placeholder={gameMode === 'you-vs-ai' ? "Your argument..." : "Ask a question..."}
+              placeholder={
+                gameMode === 'you-vs-ai' ? 'Your argument...' : 'Ask a question...'
+              }
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               className="flex-grow mr-2 bg-gray-700 text-white placeholder-gray-400"
             />
-            <Button onClick={handleSendMessage} disabled={!isConnected} className="bg-blue-500 hover:bg-blue-600">
+            <Button
+              onClick={handleSendMessage}
+              disabled={!isConnected}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
               {gameMode === 'you-vs-ai' ? <Mic className="mr-2" /> : null}
               {gameMode === 'you-vs-ai' ? 'Speak' : 'Send'}
             </Button>
@@ -142,5 +167,5 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

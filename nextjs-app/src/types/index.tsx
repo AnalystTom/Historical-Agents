@@ -26,3 +26,11 @@ export type Message = {
   timestamp: Date
 }
 
+
+export interface DebateChatInterfaceProps {
+  gameMode: string;
+  topic: string; // Add this line if it's missing
+  debaters: Debater[];
+  messages: Message[];
+}
+

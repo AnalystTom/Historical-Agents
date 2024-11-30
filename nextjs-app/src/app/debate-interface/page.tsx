@@ -1,16 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation'; // Correct import
 import { DebateChatInterface } from '@/components/debate-chat-interface';
 import { Debater, Message } from '@/types';
 
 export default function DebatePage() {
+  const searchParams = useSearchParams(); // Use useSearchParams
+  const debate_topic = searchParams.get('debate_topic');
+  const debater1 = searchParams.get('debater1');
+  const debater2 = searchParams.get('debater2');
+  
   const [greetings, setGreetings] = useState<string>('');
   const [conversation, setConversation] = useState<Message[]>([]);
   const [debateHistory, setDebateHistory] = useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const debater1Id = debater1 || 'unknown';
+  const debater2Id = debater2 || 'unknown';
 
   useEffect(() => {
+    if (!debate_topic || !debater1 || !debater2) return; // Ensure parameters are available
+
     const fetchDebateData = async () => {
       try {
         const response = await fetch('http://localhost:8000/trigger_workflow', {
@@ -19,9 +29,9 @@ export default function DebatePage() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            debate_topic: 'AI in Football?',
-            debater1: 'benjamin-netanyahu',
-            debater2: 'yair-lapid',
+            debate_topic,
+            debater1,
+            debater2,
             max_iterations: 3
           })
         });
@@ -46,7 +56,7 @@ export default function DebatePage() {
     };
 
     fetchDebateData();
-  }, []);
+  }, [debate_topic, debater1, debater2]);
 
   if (!isReady) {
     return (
@@ -57,29 +67,50 @@ export default function DebatePage() {
   }
 
   const debaters: Debater[] = [
-    { id: 'benjamin-netanyahu', name: 'Benjamin Netanyahu', image: '/benjamin-netanyahu.jpg' },
-    { id: 'yair-lapid', name: 'Yair Lapid', image: '/yair-lapid.jpg' }
+    {
+      id: debater1Id,
+      name: debater1Id,
+      image: '/debater1.jpg',
+      yearsActive: 'Unknown',
+      quote: 'No quote available',
+      achievements: [],
+      background: 'No background available',
+      tone: 'Neutral',
+      style: 'Formal'
+    },
+    {
+      id: debater2Id,
+      name: debater2Id,
+      image: '/debater2.jpg',
+      yearsActive: 'Unknown',
+      quote: 'No quote available',
+      achievements: [],
+      background: 'No background available',
+      tone: 'Neutral',
+      style: 'Formal'
+    }
   ];
+
+  const combinedMessages: Message[] = [
+    { id: 'greeting', sender: 'system', content: greetings, timestamp: new Date() },
+    ...conversation,
+    ...debateHistory.map((history, index) => ({
+      id: `history-${index}`,
+      sender: 'system',
+      content: history,
+      timestamp: new Date()
+    }))
+  ];
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-2xl font-bold mb-4">Debate Session</h1>
-      <div className="mb-4">
-        <p className="font-bold">Greetings:</p>
-        <p>{greetings}</p>
-      </div>
       <DebateChatInterface 
         gameMode="ai-vs-ai"
-        topic="AI in Football?"
+        topic={debate_topic}
         debaters={debaters}
-        messages={conversation}
-      />
-      <div>
-        <p className="font-bold">Debate History:</p>
-        {debateHistory.map((history, index) => (
-          <p key={index} className="bg-gray-200 p-2 rounded mb-2">{history}</p>
-        ))}
-      </div>
+        messages={combinedMessages}
+     />
     </div>
-  );
+  )
 }
