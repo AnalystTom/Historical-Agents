@@ -7,7 +7,7 @@ Running the application:
 
 ### 1. Run the Application
 
-Start the FastAPI server by running the `flow_langgraph.py` script:
+Start the FastAPI server by running the `Maaz-test.py` script:
 
 The server will start on `http://0.0.0.0:8000`.
 
