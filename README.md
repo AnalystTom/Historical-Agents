@@ -13,7 +13,11 @@ The server will start on `http://0.0.0.0:8000`.
 
 ### 2. Access the Frontend
 
+run npm install from root command 
+Then -force with the typescript command that it shows
+
 Run 'npm run dev' using bash from the nextjs-app folder
+
 
 ### 3. Proceed with the app
 
