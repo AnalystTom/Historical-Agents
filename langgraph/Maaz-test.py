@@ -7,6 +7,14 @@ Original file is located at
     https://colab.research.google.com/drive/1kf_MassRUgjCW-sQXmVysuCJoyAsVkQO
 """
 
+# LangChain + Monto Carlo Search Tree( )
+# Tracing  LangSmith,
+# Debate search
+# Tooling
+# Output presentation
+# Reduce hallunincatation
+
+from textwrap3 import indent, dedent
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -131,10 +139,11 @@ def greeting_node(state: State):
   pro_debator = state['pro_debator']
   anti_debator = state['anti_debator']
 
-  prompt = f"""You are hosting a debate between {pro_debator} and {anti_debator}
-            on the topic {topic}. {pro_debator} is pro while {anti_debator} is
-            against. You have to introduce the topic and debators to the audience.
-            Your response should be short and conversational
+  prompt = f"""
+        Welcome the audience to a lively debate between {pro_debator} and {anti_debator} on {topic}.
+
+        {pro_debator} champions the "Pro" side, and {anti_debator} defends the "Against" side.
+        Introduce them warmly in under 40 words, keeping it fun and engaging!
             """
 
   greetings = model.invoke(prompt).content
@@ -317,7 +326,7 @@ def pro_debator_node(state: State):
             pro_debator=pro_debator,
             anti_debator=anti_debator
         ))
-
+        # we might store this text into vector store
         messages = [system_message]
 
     # Responding to opponent
@@ -386,6 +395,7 @@ def anti_debator_node(state: State):
     context = state['context']
 
     # Get the latest pro debator response
+    # need to debate history ? most 
     latest_pro_response = pro_debator_response.content if pro_debator_response else ""
 
     prompt_template = """Role: You are {anti_debator} participating in a formal debate.
@@ -452,40 +462,55 @@ def anti_debator_node(state: State):
 
 @measure_time
 def debate_summarizer_node(state: State):
-  """LangGraph node that summarizes the exchange of arguments between debator
-  and append to history for future consideration
-  """
-  pro_debator = state['pro_debator']
-  anti_debator = state['anti_debator']
-  debate_history = state['debate_history']
-  anti_debator_response = state['anti_debator_response']
-  pro_debator_response = state['pro_debator_response']
-  prompt = """
-            Summarize the conversation between the pro {pro_debator} and anti debator {anti_debator},
-            highlighting the key points of their arguments and discarding unnecessary points. The
-            summary should be concise and brief, with high quality.
-            **Instructions:**
-            * Focus on the core arguments presented by both sides.
-            * Identify the main points of agreement and disagreement.
-            * Provide a clear and objective overview of the debate.
-            * Avoid including irrelevant details or repetitive information.
-            * Ensure that the summary is easy to understand and informative.
-            * The summary should be approximately 1.
-            **Pro Debator:**
-            {pro_debator_response}
-            **Anti Debator:**
-            {anti_debator_response}
-          """
-  system_message = prompt.format(
-                      pro_debator=pro_debator,
-                      pro_debator_response=anti_debator_response,
-                      anti_debator=anti_debator,
-                      anti_debator_response=anti_debator_response,
-                    )
-  summary = model.invoke(system_message).content
-  debate_history.append(summary)
-  return {"debate_history": debate_history}
+    """
+    LangGraph node that summarizes the exchange of arguments between debators
+    and appends to history for future consideration.
+    """
+    # Extracting relevant state information
+    pro_debator = state['pro_debator']
+    anti_debator = state['anti_debator']
+    debate_history = state['debate_history']
+    pro_debator_response = state['pro_debator_response']
+    anti_debator_response = state['anti_debator_response']
 
+    # Prompt for summarization
+    prompt = """
+    Summarize the conversation between the pro debator ({pro_debator}) 
+    and anti debator ({anti_debator}), highlighting the key points of their arguments 
+    and discarding unnecessary points.
+
+    **Instructions:**
+    - Focus on the core arguments presented by both sides.
+    - Identify the main points of agreement and disagreement.
+    - Provide a clear and objective overview of the debate.
+    - Avoid including irrelevant details or repetitive information.
+    - Ensure that the summary is easy to understand and informative.
+    - Keep the summary concise and approximately 1 paragraph.
+
+    **Pro Debator's Arguments:**
+    {pro_debator_response}
+
+    ------------------------
+
+    **Anti Debator's Arguments:**
+    {anti_debator_response}
+    """
+
+    # Formatting the system message
+    system_message = prompt.format(
+        pro_debator=pro_debator,
+        anti_debator=anti_debator,
+        pro_debator_response=pro_debator_response,
+        anti_debator_response=anti_debator_response
+    )
+
+    # Generating summary using the model
+    summary = model.invoke(system_message).content
+
+    # Appending the summary to the debate history
+    debate_history.append(summary)
+
+    return {"debate_history": debate_history}
 
 
 builder = StateGraph(State)
@@ -583,8 +608,6 @@ async def trigger_workflow(request: Request):
     }
 
     return response
-
-
 
 if __name__ == "__main__":
     import uvicorn
