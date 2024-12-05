@@ -21,7 +21,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Any, List, TypedDict
 import os
 import time
-
+from pymongo import MongoClient
+from langchain.text_splitter import CharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+from datetime import datetime
 # Your other imports
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
@@ -69,10 +72,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Set your API keys (ensure they are securely stored)
 os.environ["TAVILY_API_KEY"] = "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"
 os.environ["GROQ_API_KEY"] = "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"
+
 
 # Initialize the model
 model = ChatGroq(
@@ -148,6 +151,39 @@ def greeting_node(state: State):
 
   greetings = model.invoke(prompt).content
   return {"greetings": greetings}
+
+from pymongo import MongoClient
+from langchain.text_splitter import CharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+from datetime import datetime
+
+# Connect to MongoDB
+client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
+db = client["personaDB"]
+collection = db["conversionChunkLog"]
+
+# Load embedding model (offline)
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Replace with your chosen offline model
+
+def store_debate_chunk(turn, role, position, text):
+    # Split text into chunks
+    text_splitter = CharacterTextSplitter(separator=". ", chunk_size=200, chunk_overlap=50)
+    chunks = text_splitter.split_text(text)
+    
+    # Process each chunk
+    for chunk_number, chunk_text in enumerate(chunks, start=1):
+        embedding = embedding_model.encode(chunk_text).tolist()
+        document = {
+            "turn": turn,
+            "role": role,
+            "chunk_number": chunk_number,
+            "chunk_text": chunk_text,
+            "position": position,
+            "embedding": embedding,
+            "timestamp": datetime.utcnow()
+        }
+        # Insert document into MongoDB
+        collection.insert_one(document)
 
 
 @measure_time
@@ -291,10 +327,43 @@ def analyzer_router(state: State):
     else:
         return "Anti Debator"  # Anti Debator responds to the pro-debator's argument
 
+
+from pymongo import MongoClient
+from langchain.text_splitter import CharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+from datetime import datetime
+
+# Connect to MongoDB
+client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
+db = client["personaDB"]
+collection = db["conversionChunkLog"]
+
+# Load embedding model (offline)
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Replace with your chosen offline model
+
+def store_debate_chunk(turn, role, position, text):
+    # Split text into chunks
+    text_splitter = CharacterTextSplitter(separator=". ", chunk_size=200, chunk_overlap=50)
+    chunks = text_splitter.split_text(text)
+    
+    # Process each chunk
+    for chunk_number, chunk_text in enumerate(chunks, start=1):
+        embedding = embedding_model.encode(chunk_text).tolist()
+        document = {
+            "turn": turn,
+            "role": role,
+            "chunk_number": chunk_number,
+            "chunk_text": chunk_text,
+            "position": position,
+            "embedding": embedding,
+            "timestamp": datetime.utcnow()
+        }
+        # Insert document into MongoDB
+        collection.insert_one(document)
+
 @measure_time
 def pro_debator_node(state: State):
     """LangGraph node that represents the pro debator"""
-
     print("Pro Debator Node")
 
     # Extract state variables
@@ -304,9 +373,10 @@ def pro_debator_node(state: State):
     anti_debator = state['anti_debator']
     debate_history = state['debate_history']
     debate = state['debate']
+    curr_iter = state['iteration']
 
     # Initial debate opening
-    if anti_debator_response is None and debate == []:
+    if anti_debator_response is None and not debate:
         prompt_template = """Role: You are {pro_debator} in a formal debate setting.
 
         Topic: "{topic}"
@@ -326,11 +396,9 @@ def pro_debator_node(state: State):
             pro_debator=pro_debator,
             anti_debator=anti_debator
         ))
-        # we might store this text into vector store
         messages = [system_message]
-
-    # Responding to opponent
     else:
+        # Responding to opponent
         context = state['context']
         prompt_template = """Role: You are {pro_debator} in an ongoing debate.
 
@@ -371,14 +439,26 @@ def pro_debator_node(state: State):
     response = model.invoke(messages)
     pro_debator_response_content = response.content
 
+    # Store chunks in MongoDB with embeddings
+    store_debate_chunk(
+        turn=curr_iter,
+        role="pro_debator",
+        position="pro",
+        text=pro_debator_response_content
+    )
+
     # Create a HumanMessage with the response content
     pro_debator_response = HumanMessage(
         content=f"{pro_debator}: {pro_debator_response_content}",
         name="pro_response"
     )
 
+    # Update debate history
     debate.append(pro_debator_response)
+
     return {"pro_debator_response": pro_debator_response, "debate": debate}
+
+
 
 @measure_time
 def anti_debator_node(state: State):
@@ -393,11 +473,12 @@ def anti_debator_node(state: State):
     debate_history = state['debate_history']
     debate = state['debate']
     context = state['context']
+    curr_iter = state['iteration']
 
     # Get the latest pro debator response
-    # need to debate history ? most 
     latest_pro_response = pro_debator_response.content if pro_debator_response else ""
 
+    # Prompt for anti-debator's response
     prompt_template = """Role: You are {anti_debator} participating in a formal debate.
 
     Topic: "{topic}"
@@ -446,10 +527,18 @@ def anti_debator_node(state: State):
     # Generate response using the model
     anti_debator_response_content = model.invoke([system_message]).content
 
+    # Store chunks in MongoDB with embeddings
+    store_debate_chunk(
+        turn=curr_iter,
+        role="anti_debator",
+        position="opp",
+        text=anti_debator_response_content
+    )
+
     # Create an AIMessage with the response content
     anti_debator_response = AIMessage(
         content=f"{anti_debator}: {anti_debator_response_content}",
-        name="anti_response"  # Fixed the name to be "anti_response" instead of "pro_response"
+        name="anti_response"
     )
 
     # Update debate history
@@ -459,6 +548,7 @@ def anti_debator_node(state: State):
         "anti_debator_response": anti_debator_response,
         "debate": debate
     }
+
 
 @measure_time
 def debate_summarizer_node(state: State):
@@ -608,6 +698,7 @@ async def trigger_workflow(request: Request):
     }
 
     return response
+
 
 if __name__ == "__main__":
     import uvicorn
