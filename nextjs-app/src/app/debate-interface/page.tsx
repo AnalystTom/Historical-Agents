@@ -104,7 +104,7 @@ export default function DebatePage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100">
       <DebateChatInterface 
         gameMode="ai-vs-ai"
         topic={debate_topic}
@@ -112,5 +112,6 @@ export default function DebatePage() {
         messages={combinedMessages}
      />
     </div>
+
   )
 }

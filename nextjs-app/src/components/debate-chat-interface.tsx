@@ -50,42 +50,24 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      scrollAreaRef.current.scrollTop = 0; // Scroll to the top when the component mounts
     }
-  }, [messages]);
+  }, []); // Empty dependency array to run only on mount
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
-    <Card className="w-full mx-auto bg-transparent text-white border-none shadow-none">
-      <CardHeader>
-        <CardTitle className="text-4xl md:text-5xl font-serif mb-8 text-center">
-          {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
-        </CardTitle>
-        <p className="text-center text-gray-300">Topic: {topic}</p>
-      </CardHeader>
-      <CardContent>
+    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-start p-4 overflow-hidden">
+      <Card className="w-full mx-auto bg-transparent text-white border-none shadow-none">
+        <CardHeader>
+          <CardTitle className="text-4xl md:text-5xl font-serif text-center mb-2">
+            {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
+          </CardTitle>
+          <p className="text-center text-gray-300 mb-4">Topic: {topic}</p>
+        </CardHeader>
+        <CardContent>
           <div className="flex justify-between mb-4">
-            {/*debaters.map((debater) => (
-              <div key={debater.id} className="flex flex-col items-center">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={debater.image} alt={capitalizeName(debater.name)} />
-                  <AvatarFallback>{capitalizeName(debater.name)[0]}</AvatarFallback>
-                </Avatar>
-                <span className="mt-2 font-semibold">{capitalizeName(debater.name)}</span>
-                {currentTurn === debater.id && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="mt-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs"
-                  >
-                    Speaking
-                  </motion.div>
-                )}
-              </div>
-            ))*/}
+            {/* Debater avatars and turn indicator */}
           </div>
-          <ScrollArea className="h-[60vh] mb-4 pr-4" ref={scrollAreaRef}>
+          <ScrollArea className="h-[80vh] mb-4 pr-4" ref={scrollAreaRef}>
             <AnimatePresence initial={false}>
               {messages.map((message) => (
                 <motion.div
@@ -144,26 +126,6 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
               ))}
             </AnimatePresence>
           </ScrollArea>
-          <div className="flex items-center mt-4">
-            <Input
-              type="text"
-              placeholder={
-                gameMode === 'you-vs-ai' ? 'Your argument...' : 'Ask a question...'
-              }
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-grow mr-2 bg-gray-700 text-white placeholder-gray-400"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!isConnected}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              {gameMode === 'you-vs-ai' ? <Mic className="mr-2" /> : null}
-              {gameMode === 'you-vs-ai' ? 'Speak' : 'Send'}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

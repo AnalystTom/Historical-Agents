@@ -18,11 +18,15 @@ export default function TopicSelection() {
   const router = useRouter();
 
   useEffect(() => {
-    const gameMode = localStorage.getItem('selectedGameMode');
-    if (!gameMode) {
-      router.push('/');
-    }
-  }, [router]);
+    // Set the default game mode to "AI vs AI"
+    localStorage.setItem('selectedGameMode', 'ai-vs-ai');
+  }, []);
+
+  const handleSelect = (topicId: string) => {
+    setSelectedTopic((prevSelectedTopic) => 
+      prevSelectedTopic === topicId ? null : topicId
+    );
+  };
 
   const handleContinue = () => {
     const topicToUse = customTopic || selectedTopic;
@@ -42,25 +46,28 @@ export default function TopicSelection() {
       >
         Select a Topic
       </motion.h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mb-8">
         {topics.map((topic) => (
           <TopicCard
             key={topic.id}
             topic={topic}
             isSelected={selectedTopic === topic.id}
-            onSelect={() => setSelectedTopic(topic.id)}
+            onSelect={() => handleSelect(topic.id)}
           />
         ))}
       </div>
-      <input
-        type="text"
-        placeholder="Or enter your own topic"
-        value={customTopic}
-        onChange={(e) => setCustomTopic(e.target.value)}
-        className="mt-4 p-2 bg-gray-800 text-white rounded"
-      />
+      <p className="text-xl mb-4 text-center">Or enter your own topic:</p>
+      <div className="flex space-x-4 mb-8 justify-center">
+        <input
+          type="text"
+          placeholder="Input Custom Topic"
+          value={customTopic}
+          onChange={(e) => setCustomTopic(e.target.value)}
+          className="p-2 bg-gray-800 text-white rounded border-2 border-gray-700"
+        />
+      </div>
       <motion.div
-        className="mt-8"
+        className="mt-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -68,6 +75,7 @@ export default function TopicSelection() {
         <Button 
           size="lg" 
           onClick={handleContinue}
+          className={`p-2 rounded border-2 ${selectedTopic || customTopic ? 'bg-gray-800 text-white border-gray-700' : ''}`}
           disabled={!selectedTopic && !customTopic}
         >
           Continue to Debater Selection
