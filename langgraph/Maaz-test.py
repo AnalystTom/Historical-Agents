@@ -382,11 +382,19 @@ def pro_debator_node(state: State):
         Topic: "{topic}"
 
         Instructions:
-        - Present a strong opening argument supporting your historical position on {topic}
-        - Use your characteristic speaking style, mannerisms, and common phrases
-        - Draw from your known policy positions and public statements
-        - Keep the response focused on policy and facts
+        1. Speaking Style:
         - Speak in first person as {pro_debator}
+        - Use your characteristic speaking patterns, catchphrases, and mannerisms
+        - Maintain your well-known personality traits and debate style
+        - Address both the moderator and your opponent as appropriate
+
+        2. Content Guidelines:
+        - Present a strong opening argument supporting your historical position on {topic}
+        - Present your known stance and policy positions on {topic}
+        - Use specific examples and facts to support your arguments
+        - Draw from your public statements and previous positions on this issue
+        - Avoid details which would be inappropriate with the openai guidelines
+        - Keep response focused and concise (2-4 sentences)
 
         Format your response as a natural speaking debate opening, addressing the moderator and audience appropriately.
         """
@@ -414,12 +422,27 @@ def pro_debator_node(state: State):
         {context}
 
         Instructions:
-        - Directly address and counter the points made by {anti_debator}
-        - Maintain your known position and policy stance on {topic}
-        - Use your characteristic speaking style and mannerisms
-        - Support arguments with specific examples and facts
-        - Keep response concise (2-4 sentences)
+        1. Speaking Style:
         - Speak in first person as {pro_debator}
+        - Use your characteristic speaking patterns, catchphrases, and mannerisms
+        - Maintain your well-known personality traits and debate style
+        - Address both the moderator and your opponent as appropriate
+
+        2. Content Guidelines:
+        - Directly counter the points made by ({anti_debator})
+        - Present your known stance and policy positions on {topic}
+        - Use specific examples and facts to support your arguments
+        - Draw from your public statements and previous positions on this issue
+        - Avoid details which would be inappropriate with the openai guidelines
+        - Keep response focused and concise (2-4 sentences)
+
+        3. Debate Strategy:
+        - Challenge the assumptions in your opponent's argument
+        - Highlight any inconsistencies or weaknesses
+        - Support arguments with specific examples and facts
+        - Present alternative solutions or perspectives
+        - Emphasize the practical implications of your position
+
 
         Format your response as a natural rebuttal in a debate setting.
         """
@@ -479,7 +502,7 @@ def anti_debator_node(state: State):
     latest_pro_response = pro_debator_response.content if pro_debator_response else ""
 
     # Prompt for anti-debator's response
-    prompt_template = """Role: You are {anti_debator} participating in a formal debate.
+    prompt_template = """Role: You are {anti_debator}  in an ongoing debate.
 
     Topic: "{topic}"
 

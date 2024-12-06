@@ -32,7 +32,7 @@ export default function DebatePage() {
             debate_topic,
             debater1,
             debater2,
-            max_iterations: 3
+            max_iterations: 2
           })
         });
 

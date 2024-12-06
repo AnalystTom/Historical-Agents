@@ -55,17 +55,17 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
   }, [messages]);
 
   return (
-    <div className="min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/debate-stage.jpg')" }}>
-      <Card className="w-full mx-auto bg-black/70 text-white">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
-          </CardTitle>
-          <p className="text-center text-gray-300">Topic: {topic}</p>
-        </CardHeader>
-        <CardContent>
+    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4">
+    <Card className="w-full mx-auto bg-transparent text-white border-none shadow-none">
+      <CardHeader>
+        <CardTitle className="text-4xl md:text-5xl font-serif mb-8 text-center">
+          {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
+        </CardTitle>
+        <p className="text-center text-gray-300">Topic: {topic}</p>
+      </CardHeader>
+      <CardContent>
           <div className="flex justify-between mb-4">
-            {debaters.map((debater) => (
+            {/*debaters.map((debater) => (
               <div key={debater.id} className="flex flex-col items-center">
                 <Avatar className="w-16 h-16">
                   <AvatarImage src={debater.image} alt={capitalizeName(debater.name)} />
@@ -83,7 +83,7 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
                   </motion.div>
                 )}
               </div>
-            ))}
+            ))*/}
           </div>
           <ScrollArea className="h-[60vh] mb-4 pr-4" ref={scrollAreaRef}>
             <AnimatePresence initial={false}>
