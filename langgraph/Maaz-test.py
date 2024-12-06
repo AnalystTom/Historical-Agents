@@ -156,6 +156,8 @@ from pymongo import MongoClient
 from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
+from transformers import pipeline
+from datetime import datetime
 
 # Connect to MongoDB
 client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
@@ -165,25 +167,26 @@ collection = db["conversionChunkLog"]
 # Load embedding model (offline)
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Replace with your chosen offline model
 
-def store_debate_chunk(turn, role, position, text):
-    # Split text into chunks
-    text_splitter = CharacterTextSplitter(separator=". ", chunk_size=200, chunk_overlap=50)
-    chunks = text_splitter.split_text(text)
-    
-    # Process each chunk
-    for chunk_number, chunk_text in enumerate(chunks, start=1):
-        embedding = embedding_model.encode(chunk_text).tolist()
-        document = {
-            "turn": turn,
-            "role": role,
-            "chunk_number": chunk_number,
-            "chunk_text": chunk_text,
-            "position": position,
-            "embedding": embedding,
-            "timestamp": datetime.utcnow()
-        }
-        # Insert document into MongoDB
-        collection.insert_one(document)
+def store_debate_summary(turn, role, position, text):
+        # Initialize the summarization pipeline with a smaller model
+    summarizer = pipeline("summarization", model="t5-small", tokenizer="t5-small")
+
+    # Summarize the text into a maximum of 10 sentences
+    summary = summarizer(text, max_length=130, min_length=50, do_sample=False)[0]['summary_text']
+
+    # Create the document
+    document = {
+        "turn": turn,
+        "role": role,
+        "summarized_text": summary,
+        "position": position,
+        "timestamp": datetime.utcnow()
+    }
+
+    # Insert the document into MongoDB
+    collection.insert_one(document)
+
+
 
 
 @measure_time
@@ -382,19 +385,11 @@ def pro_debator_node(state: State):
         Topic: "{topic}"
 
         Instructions:
-        1. Speaking Style:
-        - Speak in first person as {pro_debator}
-        - Use your characteristic speaking patterns, catchphrases, and mannerisms
-        - Maintain your well-known personality traits and debate style
-        - Address both the moderator and your opponent as appropriate
-
-        2. Content Guidelines:
         - Present a strong opening argument supporting your historical position on {topic}
-        - Present your known stance and policy positions on {topic}
-        - Use specific examples and facts to support your arguments
-        - Draw from your public statements and previous positions on this issue
-        - Avoid details which would be inappropriate with the openai guidelines
-        - Keep response focused and concise (2-4 sentences)
+        - Use your characteristic speaking style, mannerisms, and common phrases
+        - Draw from your known policy positions and public statements
+        - Keep the response focused on policy and facts
+        - Speak in first person as {pro_debator}
 
         Format your response as a natural speaking debate opening, addressing the moderator and audience appropriately.
         """
@@ -422,27 +417,12 @@ def pro_debator_node(state: State):
         {context}
 
         Instructions:
-        1. Speaking Style:
-        - Speak in first person as {pro_debator}
-        - Use your characteristic speaking patterns, catchphrases, and mannerisms
-        - Maintain your well-known personality traits and debate style
-        - Address both the moderator and your opponent as appropriate
-
-        2. Content Guidelines:
-        - Directly counter the points made by ({anti_debator})
-        - Present your known stance and policy positions on {topic}
-        - Use specific examples and facts to support your arguments
-        - Draw from your public statements and previous positions on this issue
-        - Avoid details which would be inappropriate with the openai guidelines
-        - Keep response focused and concise (2-4 sentences)
-
-        3. Debate Strategy:
-        - Challenge the assumptions in your opponent's argument
-        - Highlight any inconsistencies or weaknesses
+        - Directly address and counter the points made by {anti_debator}
+        - Maintain your known position and policy stance on {topic}
+        - Use your characteristic speaking style and mannerisms
         - Support arguments with specific examples and facts
-        - Present alternative solutions or perspectives
-        - Emphasize the practical implications of your position
-
+        - Keep response concise (2-4 sentences)
+        - Speak in first person as {pro_debator}
 
         Format your response as a natural rebuttal in a debate setting.
         """
@@ -463,7 +443,7 @@ def pro_debator_node(state: State):
     pro_debator_response_content = response.content
 
     # Store chunks in MongoDB with embeddings
-    store_debate_chunk(
+    store_debate_summary(
         turn=curr_iter,
         role="pro_debator",
         position="pro",
@@ -502,7 +482,7 @@ def anti_debator_node(state: State):
     latest_pro_response = pro_debator_response.content if pro_debator_response else ""
 
     # Prompt for anti-debator's response
-    prompt_template = """Role: You are {anti_debator}  in an ongoing debate.
+    prompt_template = """Role: You are {anti_debator} participating in a formal debate.
 
     Topic: "{topic}"
 
@@ -551,7 +531,7 @@ def anti_debator_node(state: State):
     anti_debator_response_content = model.invoke([system_message]).content
 
     # Store chunks in MongoDB with embeddings
-    store_debate_chunk(
+    store_debate_summary(
         turn=curr_iter,
         role="anti_debator",
         position="opp",
