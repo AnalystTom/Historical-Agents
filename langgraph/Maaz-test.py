@@ -190,145 +190,234 @@ def store_debate_summary(turn, role, position, text):
 
 
 @measure_time
-def analyzer_node(state: State):
+def planning_node(state: State):
     """LangGraph node that analyzes the latest argument for web search"""
-    print("Analyzer Node")
     topic = state['topic']
-    debate = state['debate']
     pro_debator = state['pro_debator']
     anti_debator = state['anti_debator']
-    last_message = debate[-1]
-    analysis_prompt = None
+    last_message = state["debate"][-1]
+    planning_prompt = None
+
+    system_message = ""
+
     if isinstance(last_message, HumanMessage):
-        # Generate a prompt for a HumanMessage (pro-debator)
-        print("Analyzing for Anti Debator")
-        analysis_prompt = f"""
-        Analyze the latest argument made by the pro-debator {pro_debator}  on the topic "{topic}".
-        Focus on its strengths, weaknesses, and logical coherence. Write a short and concise
-        analytical guidance that can be used for web search to help {anti_debator} better answer the argument
-        and more completely support their stance on the topic {topic}. Keep the analysis as short as possible
-        without losing quality.
-        **Pro-Debator's Argument:**
-        {last_message.content}
-        """
+      print("Planning for Anti Debator")
+      planning_prompt = """
+        You are an expert in debate strategy. Your task is to help the anti-debator
+        {anti_debator} craft
+        a compelling counter-argument to the pro-debator's, {pro_debator}, arguments on the debate topic:
+        {topic}.
+        Here's the information you have:
+        * **Pro-Debator's Argument:** {last_message}
+        Generate an actionable plan with the following structure:
+        **1. Identify Weaknesses:** Analyze the pro-debator's argument. Pinpoint logical
+        fallacies, weak points, unsupported claims, or areas where more evidence is needed.
+        **2. Research and Evidence Gathering:** Suggest specific research avenues to find
+        evidence that refutes the pro-debator's argument.  Provide concrete examples of
+        sources and keywords.
+        **3. Counter-Argument Formulation:** Outline the main points of a counter-argument.
+        Each point should directly address a weakness in the pro-debator's argument and be
+        supported by the suggested research.
+        **4. Rebuttals:** Anticipate the pro-debator's possible rebuttals and suggest
+        preemptive counter-rebuttals.
+        **5. Presentation Strategy:** Outline how to present the counter-argument
+        effectively:
+            * Should the anti-debator focus on emotion or logic?
+            * What rhetorical devices would be effective?
+            * How to present the evidence concisely and persuasively?
+        Example Output:
+        **1. Identify Weaknesses:** The pro-debator's argument relies on a study from
+        2010, which may be outdated.  They also don't address the economic impact of
+        their proposal.
+
+        **2. Research and Evidence Gathering:** Search for more recent studies on the
+        topic. Look for economic analyses of similar proposals. Search terms: "[topic]
+        economic impact," "[topic] recent studies," etc.  Look for credible sources
+        such as peer-reviewed journals.
+        **3. Counter-Argument Formulation:**
+            * Point 1: The 2010 study is outdated and newer research contradicts its findings.
+            * Point 2: The proposal has significant negative economic consequences.
+        **4. Rebuttals:** The pro-debator might argue that the newer studies are biased.
+        Prepare to address this by presenting evidence of the studies' methodology and
+        peer review.
+        **5. Presentation Strategy:** Emphasize the economic impact and present the data
+        visually. Maintain a logical, calm demeanor. Use statistics and specific examples
+        instead of generalizations.
+
+        Ensure the plan is specific to the given information.
+      """
+
+      system_message = planning_prompt.format(
+          topic=topic,
+          anti_debator=anti_debator,
+          pro_debator = pro_debator,
+          last_message=last_message,
+      )
 
     elif isinstance(last_message, AIMessage):
-        # Generate a prompt for an AIMessage (anti-debator)
-        print("Analyzing for Pro Debator")
-        analysis_prompt = f"""
-        Analyze the latest counterargument made by the anti-debator {anti_debator} on the topic "{topic}".
-        Identify key points of contention and evaluate their validity.  Write a short and concise
-        analytical guidance that can be used for web search to help {anti_debator} to effectively refute these arguments
-        and more completely support their stance on the topic {topic}. Keep the analysis as short as possible
-        without losing quality.
-        **Anti-Debator's Counterargument:**
-        {last_message.content}
-        """
+      # Analysis for an AIMessage (anti-debator's counterargument)
+      print("Analyzing for Pro Debator")
+      planning_prompt = """
+        You are an expert debate strategist tasked with formulating a
+        counter-argument
+        against an opponent's position on a given topic.  Your goal is to
+        create an actionable plan to devise a compelling and effective
+        counter-argument for {anti_debator} against {pro_debator}.
+        Given the following information:
+        1. **Topic:** {topic}
+        2. **Anti-Debator's Argument:** {last_message}
+        4. **Desired Outcome:** Develop a counter-argument that effectively
+        refutes the opponent's claims, strengthens your own position, and
+        persuades the audience.
 
-    analysis = model.invoke(analysis_prompt).content
-    return {"analysis": analysis}
+
+        **Develop an actionable plan that includes the following:**
+
+        * **Identify Key Weaknesses:** Analyze the opponent's argument for
+        logical fallacies, weak points, unsupported claims, or inconsistencies.
+        List at least 3 key weaknesses.
+        * **Research & Evidence Gathering:** Specify relevant areas of research,
+        data sources, or examples that can be used to support your counter-argument.
+        * **Counter-Argument Formulation:**  Outline the structure of your
+        counter-argument.  Include the key points you will make and how they
+        directly address the weaknesses identified.
+        * **Rebuttals:** Anticipate potential rebuttals from the opponent and
+        formulate concise responses.
+        * **Presentation Strategy:**  Suggest how to effectively present your
+        counter-argument, considering factors such as tone, clarity, and
+        persuasive language.
+        **Deliverable:** A detailed, step-by-step plan that can be used to
+        create a powerful and persuasive counter-argument.
+      """
+      system_message = planning_prompt.format(
+          topic=topic,
+          anti_debator=anti_debator,
+          pro_debator = pro_debator,
+          last_message=last_message
+      )
+    state['planner'] = model.invoke(system_message).content
+    return state
 
 
 @measure_time
 def search_web(state: State):
-    """LangGraph node to search the web using Tavily Search API and append the results to context."""
-    analysis = state['analysis']
+    """LangGraph node that do a DuckDuckGo search and append the results to context."""
+    planner = state['planner']
+    last_message = state['debate'][-1]
 
-    context = state['context']
+    prompt = f"""
+        You are a search query generator for debate.
+        Instructions:
+        Based on the provided planning of the latest argument and the
+        last message in a debate, generate a concise search query (maximum 8 words)
+        focused on retrieving statistical and numerical data relevant to the latest prompt.
+        Prioritize queries that are likely to yield objective data.
+        Planning:
+        {planner}
 
-    # Generate Search Query
-    search_query = model.invoke(
-        f"Generate a web search query using analysis {analysis} and debate history {state['debate_history']}. the search query should be no longer than 3 sentences"
-    ).content
-    print("Tavily Search Query:", search_query)
-    tavily_search = TavilySearchResults(
-                      max_results=2,
-                      include_answer=True,
-                      include_raw_content=True,
-                      # search_depth="advanced",
-                      # include_domains = []
-                      # exclude_domains = []
-                  )
-    search_docs = tavily_search.invoke(search_query)
-    print("search_docs:", search_docs)
+        Last Message:
+        {last_message}
+      """
+    search_query = model.invoke(prompt).content.strip()
 
-    # Check if `search_docs` contains valid dictionaries
-    if isinstance(search_docs, list) and all(isinstance(doc, dict) for doc in search_docs):
-        formatted_search_docs = "\n\n---\n\n".join(
-            [
-                f"**URL:** {doc.get('url', 'No URL')}\n**Content:** {doc.get('content', 'No Content')}"
-                for doc in search_docs
-            ]
-        )
-    elif isinstance(search_docs, list) and all(isinstance(doc, str) for doc in search_docs):
-        formatted_search_docs = "\n\n---\n\n".join(search_docs)
-    else:
-        formatted_search_docs = "Search results are in an unexpected format."
+    print("DuckDuckGo Search Query:", search_query)
 
-    # Append to context
-    context.append(formatted_search_docs)
-    return {"context": context}
+    search = DuckDuckGoSearchResults(backend="news", output_format='list')
+    search_result = search.invoke(search_query)
+    result = ""
+    for entry in search_result:
+        print(entry['snippet'])
+        result += entry['snippet'] + "\n"
+
+    state['context'].append(result)
+    return {"context": state['context']}
 
 
 
 @measure_time
 def search_wikipedia(state: State):
     """Retrieve docs from Wikipedia using WikipediaRetriever"""
-    print("Searching Wikipedia")
 
-    # Analysis and debate context
-    analysis = state['analysis']
-    debate_history = state['debate_history']
-    search_query = model.invoke(
-        f"Generate a wikipedia search query using analysis {analysis} and debate history {state['debate_history']}. the search query should be no longer than 3 sentences"
-    ).content
-    print("Wikipedia Search Query:", search_query)
+    planner = state['planner']
+    last_message = state["debate"][-1]
+    pro_debator = state['pro_debator']
+    anti_debator = state['anti_debator']
+    topic = state['topic']
 
-    # WikipediaRetriever setup
+
+    search_query_prompt = ""
+    if isinstance(last_message, HumanMessage):
+      search_query_prompt = f"""
+        You are a search assistant generating a concise search query for Wikipedia.
+        Task:
+        Find the most relevant wikipedia articles for {pro_debator} related to
+        the topic {topic} taking into account the following planning:
+        {planner}
+        Output:
+        A single concise search query relevant to the topic.
+
+        Given debater Trump and topic illegal immigration provide Immigration_policy_of_Donald_Trump
+        as search query
+      """
+    elif isinstance(last_message, AIMessage):
+      search_query_prompt = f"""
+            You are a search assistant generating a concise search query for Wikipedia.
+            Task:
+            Find the most relevant wikipedia articles for {anti_debator} related to
+            the topic {topic}
+            Output:
+            A single concise search query relevant to the topic.
+
+           Given debater Trump and topic illegal immigration provide Immigration_policy_of_Donald_Trump
+          as search query
+          """
+
+    search_query = model.invoke(search_query_prompt).content.strip()
+
+    print(f'Search Query: {search_query}\n')
+
     retriever = WikipediaRetriever()
-    search_docs = retriever.get_relevant_documents(search_query)
 
-    # Format the results
-    formatted_search_docs = "\n\n---\n\n".join(
-        [
-            f"<Document title='{doc.metadata.get('title', 'Unknown Title')}'/>\n{doc.page_content}\n</Document>"
-            for doc in search_docs
-        ]
-    )
+    search_docs = retriever.invoke(search_query)
+    print(f'Search Docs: {search_docs}')
 
-    print(f"Wikipedia DOcs: {formatted_search_docs}")
-    return {"context": [formatted_search_docs]}
+    all_summaries = ""
+    for doc in search_docs:
+        if 'summary' in doc.metadata:
+            all_summaries += doc.metadata['summary'] + "\n\n"
+
+    state['context'].append(all_summaries)
+    print(f"Updated Context: {state['context']}")
+    return state
 
 
-@measure_time
 def router(state: State):
     """LangGraph node that routes to the appropriate search function"""
     debate_history = state["debate_history"]
     if debate_history == []:
         return "Pro Debator"
     else:
-      return "Analyzer"
+      return "Planner"
+
 
 def iteration_router(state: State):
     """Routes the flow based on the current iteration and max_iteration"""
+    if state['iteration'] >= state['max_iteration']:
+        print("Ending the debate as max iteration is reached.")
+        return "Winner Decider"
+    print(f"Iteration Round: {state['iteration']}")
+    state['iteration'] += 1
+    return "Planner"
 
-    if state['iteration'] <= state['max_iteration']:
-        print(f"Iteration Round: {state['iteration']}")
-        state['iteration'] = state['iteration'] + 1
-        return "Analyzer"
-    else:
-        # End the debate
-        return END
 
-@measure_time
 def analyzer_router(state: State):
     """Function that routes to the appropriate next node"""
     debate = state['debate']
     last_message = debate[-1]
     if isinstance(last_message, AIMessage):
-        return "Pro Debator"  # Pro Debator responds to the anti-debator's argument
+        return "Pro Debator"
     else:
-        return "Anti Debator"  # Anti Debator responds to the pro-debator's argument
+        return "Anti Debator"
 
 
 from pymongo import MongoClient
@@ -606,28 +695,81 @@ def debate_summarizer_node(state: State):
     return {"debate_history": debate_history}
 
 
-builder = StateGraph(State)
+@measure_time
+def winner_decider_node(state: State):
+  """LangGraph node that determines the winner of the debate"""
+  debate_history = state['debate_history']
+  prompt = """
+    You are an AI judge tasked with determining the winner of a debate between
+    two debaters based on their debate history.
+    Analyze the provided debate history and determine which debater presented
+    more logical and compelling arguments.
 
+    Consider the following criteria:
+
+    * **Logical consistency:** Does the debater's argumentation follow a clear
+    and consistent line of reasoning? Are there any internal contradictions or
+    logical fallacies?
+    * **Evidence and support:** Does the debater provide sufficient evidence and
+    support for their claims? Are the sources credible and relevant?
+    * **Rebuttals and counterarguments:** How effectively does the debater
+    address the opponent's arguments? Do they offer strong rebuttals and
+    counterarguments?
+    * **Clarity and persuasiveness:** Is the debater's communication clear,
+    concise, and persuasive? Do they effectively convey their points to the
+    audience?
+    * **Overall impact:** Which debater's arguments had a greater overall impact
+    and persuaded you more effectively?
+
+    Debate History:
+    {debate_history}
+
+    Based on the debate history, who presented the more logical and stronger arguments: {pro_debator} or {anti_debator}?  Explain your reasoning by referencing specific instances from the debate history.  Provide a concise summary of why you chose the winner.  Do not simply restate the arguments.
+  """
+  system_message = prompt.format(
+    debate_history=debate_history,
+    pro_debator=state['pro_debator'],
+    anti_debator=state['anti_debator']
+  )
+  winner = model.invoke(system_message).content
+  return {"winner": winner}
+
+builder = StateGraph(State)
 # Add nodes
 builder.add_node("Greetings", greeting_node)
 builder.add_node("Pro Debator", pro_debator_node)
-builder.add_node("Analyzer", analyzer_node)
+builder.add_node("Planner", planning_node)
+builder.add_node("Search Web", search_web)
+builder.add_node("Search Wikipedia", search_wikipedia)
 builder.add_node("Anti Debator", anti_debator_node)
 builder.add_node("Debate Summarizer", debate_summarizer_node)
+builder.add_node('Winner Decider', winner_decider_node)
 
 # Add edges
 builder.add_edge(START, "Greetings")
-builder.add_conditional_edges("Greetings", router, ['Analyzer', 'Pro Debator'])
-builder.add_conditional_edges("Analyzer", analyzer_router, ["Pro Debator", "Anti Debator"])
-builder.add_edge("Pro Debator", "Analyzer")
+builder.add_conditional_edges("Greetings", router, ['Planner', 'Pro Debator'])
+builder.add_edge("Planner", "Search Web")
+builder.add_edge("Planner", "Search Wikipedia")
+builder.add_conditional_edges("Search Web", analyzer_router, ["Pro Debator", "Anti Debator"])
+builder.add_conditional_edges("Search Wikipedia", analyzer_router, ["Pro Debator", "Anti Debator"])
+
+
+builder.add_edge("Pro Debator", "Planner")
 builder.add_edge("Anti Debator", "Debate Summarizer")
-builder.add_edge("Debate Summarizer", END)
+builder.add_conditional_edges(
+    "Debate Summarizer",
+    iteration_router,
+    ["Planner", "Winner Decider"]
+)
+builder.add_edge("Winner Decider", END)
+
 
 # Compile the graph
-debator = builder.compile(checkpointer=memory).with_config(run_name="Create podcast")
+debator = builder.compile(checkpointer=memory).with_config(run_name="Starting Debate")
 
 # Display the graph
 display(Image(debator.get_graph().draw_mermaid_png()))
+
 
 # state = {
 #     "topic": "Ukraine War",
