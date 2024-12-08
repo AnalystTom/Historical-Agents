@@ -96,17 +96,32 @@ _set_env("TAVILY_API_KEY")
 
 memory = MemorySaver()
 
+# class State(TypedDict):
+#   topic: str
+#   pro_debator: str
+#   anti_debator: str
+#   greetings: str
+#   planning: str
+#   pro_debator_response: str
+#   anti_debator_response: str
+#   context: Annotated[list, add_messages]
+#   debate: Annotated[list, add_messages]
+#   debate_history: List[str]
+#   iteration: int
+#   max_iteration: int
+
 class State(TypedDict):
   topic: str
   pro_debator: str
   anti_debator: str
   greetings: str
-  analysis: str
   pro_debator_response: str
   anti_debator_response: str
   context: Annotated[list, add_messages]
   debate: Annotated[list, add_messages]
   debate_history: List[str]
+  planner: str
+  winner: str
   iteration: int
   max_iteration: int
 
@@ -804,7 +819,7 @@ async def trigger_workflow(request: Request):
         "pro_debator": debater1,
         "anti_debator": debater2,
         "greetings": "",
-        "analysis": "",
+        "planning": "",
         "pro_debator_response": None,
         "anti_debator_response": None,
         "context": [],
@@ -815,7 +830,7 @@ async def trigger_workflow(request: Request):
     }
 
     # Add the required 'configurable' keys
-    thread = {"configurable": {"thread_id": "unique_thread_id"}}
+    thread = {"configurable": {"thread_id": "unique_id", "recursion_limit": 100}}
 
     # Run the debate agent
     result = debator.invoke(state, thread)
