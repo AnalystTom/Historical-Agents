@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-from ..states.agent_state import State
+from states.agent_state import State
 
 load_dotenv()
 

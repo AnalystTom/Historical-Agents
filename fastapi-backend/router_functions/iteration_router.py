@@ -1,4 +1,4 @@
-from ..states.agent_state import State
+from states.agent_state import State
 
 def iteration_router(state: State):
     """Routes the flow based on the current iteration and max_iteration"""

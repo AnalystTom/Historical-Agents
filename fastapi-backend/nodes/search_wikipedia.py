@@ -5,7 +5,7 @@ from langchain_groq import ChatGroq
 from langchain_community.retrievers import WikipediaRetriever
 from langchain_core.messages import AIMessage, HumanMessage
 
-from ..states.agent_state import State
+from states.agent_state import State
 
 def search_wikipedia(state: State):
     """Retrieve docs from Wikipedia using WikipediaRetriever"""

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_groq import ChatGroq
 
-from ..states.agent_state import State
+from states.agent_state import State
 
 load_dotenv()
 

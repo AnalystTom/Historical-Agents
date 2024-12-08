@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 
-from ..states.agent_state import State
+from states.agent_state import State
 
 def debate_summarizer_node(state: State):
   """LangGraph node that summarizes the exchange of arguments between debator

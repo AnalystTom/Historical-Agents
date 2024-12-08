@@ -15,7 +15,7 @@ from router_functions.pro_and_anti_decider_router import pro_and_anti_decider_ro
 
 from states.agent_state import State
 
-def debate_agent(memory):
+def debate_agent(memory, state):
     builder = StateGraph(State)
 
     # Add nodes
@@ -47,5 +47,7 @@ def debate_agent(memory):
 
     # Compile the graph
     debator = builder.compile(checkpointer=memory).with_config(run_name="Starting Debate")
-    return debator
+    thread = {"configurable": {"thread_id": "1", "recursion_limit": 100}}
+    result = debator.invoke(state, thread)
+    return result['debate']
 

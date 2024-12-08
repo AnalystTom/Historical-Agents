@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_community.tools import DuckDuckGoSearchResults
 
-from ..states.agent_state import State
+from states.agent_state import State
 
 load_dotenv()
 
