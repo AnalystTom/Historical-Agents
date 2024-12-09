@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
-
+from langchain_groq import ChatGroq
 from states.agent_state import State
 
 load_dotenv()
@@ -11,10 +11,11 @@ load_dotenv()
 def pro_debator_node(state: State):
     """LangGraph node that represents the pro debator"""
 
-    gemini_model: ChatGoogleGenerativeAI = ChatGoogleGenerativeAI(model="gemini-1.5-flash",
-                                                            api_key=os.getenv("GOOGLE_API_KEY"),
-                                                            temperature=0.5,
-                                                            )
+    gemini_model = ChatGroq(
+      model="llama-3.1-70b-versatile",
+      temperature=0.5,
+      api_key=os.getenv("GROQ_API_KEY")
+    )
 
     topic = state['topic']
     anti_debator_response = state.get('anti_debator_response')

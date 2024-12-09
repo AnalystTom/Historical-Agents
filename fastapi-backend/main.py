@@ -31,8 +31,31 @@ async def debate(input: DebateInput):
         "debate": [],
         "debate_history": [],
         "iteration": 0,
-        "max_iteration": 3,
+        "max_iteration": 1,
         "winner": "",
     }
     response = debate_agent(memory=memory, state=state)
+    
+
+    conversation = []
+    for message in response['debate']:
+        # Determine the speaker based on the message type
+        if isinstance(message, HumanMessage):
+            speaker = debater1
+        elif isinstance(message, AIMessage):
+            speaker = debater2
+        else:
+            speaker = "System"
+
+        conversation.append({
+            'speaker': speaker,
+            'content': message.content
+        })
+
+    response = {
+        'greetings': result['greetings'],
+        'conversation': conversation,
+        'debate_history': result['debate_history']
+    }
+
     return response

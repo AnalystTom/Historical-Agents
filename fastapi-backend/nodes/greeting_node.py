@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
-
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from states.agent_state import State
 
 load_dotenv()
@@ -35,6 +35,12 @@ def greeting_node(state: State):
     - Introduce the participants and their respective backgrounds.
     - Introduce the topic of debate like a host.
     """
-
     greetings = model.invoke(prompt).content
-    return {"greetings": greetings}
+    
+    response = SystemMessage(
+        content=f"{"Moderator"}: {greetings}",
+        name="greeting"
+    )
+    
+    state['debate'].append(response)
+    return state
