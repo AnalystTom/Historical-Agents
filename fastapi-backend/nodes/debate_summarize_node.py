@@ -11,7 +11,7 @@ def debate_summarizer_node(state: State):
   """
 
   model = ChatGroq(
-    model="llama-3.1-70b-versatile",
+    model="llama-3.3-70b-versatile",
     temperature=0.5,
     api_key=os.getenv("GROQ_API_KEY")
   )

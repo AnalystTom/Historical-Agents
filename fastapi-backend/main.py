@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from langgraph.checkpoint.memory import MemorySaver
-
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from debate_agent import debate_agent
-
+from fastapi.middleware.cors import CORSMiddleware
 class DebateInput(BaseModel):
     topic: str
     pro_debator: str
@@ -13,16 +13,30 @@ memory = MemorySaver()
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify allowed origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get('/')
 async def root():
     return {"message": "Debate App"}
 
-@app.post('/debate')
-async def debate(input: DebateInput):
+@app.post('/trigger_workflow')
+async def debate(request: Request):
+    data = await request.json()
+    debate_topic = data.get('debate_topic')
+    debater1 = data.get('debater1')
+    debater2 = data.get('debater2')
+    max_iterations = data.get('max_iterations', 1)
+    
     state = {
-        "topic": input.topic,
-        "pro_debator": input.pro_debator,
-        "anti_debator": input.anti_debator,
+        "topic": debate_topic,
+        "pro_debator": debater1,
+        "anti_debator": debater2,
         "greetings": "",
         "planning": "",
         "pro_debator_response": "",
@@ -31,31 +45,36 @@ async def debate(input: DebateInput):
         "debate": [],
         "debate_history": [],
         "iteration": 0,
-        "max_iteration": 1,
+        "max_iteration": max_iterations,
         "winner": "",
     }
-    response = debate_agent(memory=memory, state=state)
     
-
+    thread = {"configurable": {"thread_id": "unique_thread_id"}}
+    
+    # Get response from debate agent
+    response = debate_agent(memory=memory, state=state)
     conversation = []
-    for message in response['debate']:
-        # Determine the speaker based on the message type
-        if isinstance(message, HumanMessage):
-            speaker = debater1
-        elif isinstance(message, AIMessage):
-            speaker = debater2
-        else:
-            speaker = "System"
-
-        conversation.append({
-            'speaker': speaker,
-            'content': message.content
-        })
-
-    response = {
-        'greetings': result['greetings'],
+    
+    # Since response is a list, we need to process it differently
+    for message in response:
+        if isinstance(message, dict):
+            # If it's a dictionary, process it as before
+            if 'greetings' in message:
+                conversation.append({
+                    'speaker': "Moderator",
+                    'content': message['greetings']
+                })
+        elif isinstance(message, (HumanMessage, AIMessage)):
+            # Process debate messages
+            speaker = debater1 if isinstance(message, HumanMessage) else debater2
+            conversation.append({
+                'speaker': speaker,
+                'content': message.content
+            })
+    
+    response_data = {
         'conversation': conversation,
-        'debate_history': result['debate_history']
+        'debate_history': state.get('debate_history', [])
     }
 
-    return response
+    return response_data
