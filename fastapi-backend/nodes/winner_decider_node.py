@@ -45,5 +45,19 @@ def winner_decider_node(state: State):
     pro_debator=state['pro_debator'],
     anti_debator=state['anti_debator']
   )
-  winner = model.invoke(system_message).content
-  return {"winner": winner}
+  winner_content = model.invoke(system_message).content
+    
+    # Format the winner content to ensure numbered points are on new lines
+  formatted_winner_content = winner_content.replace(" (Main Points of Disagreement, ", "\n(Main Points of Disagreement, ")
+  formatted_winner_content = formatted_winner_content.replace(" (Objective Overview)", "\n(Objective Overview)")
+  formatted_winner_content = formatted_winner_content.replace(" (Main Points of Agreement, ", "\n(Main Points of Agreement, ")
+    
+    # Append the formatted winner content to the debate history
+  debate_history.append(f"Winner: {formatted_winner_content}")
+    
+  state['debate_history'] = debate_history
+  state['winner'] = formatted_winner_content
+    
+  return state
+
+

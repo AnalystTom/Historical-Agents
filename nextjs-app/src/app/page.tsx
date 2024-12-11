@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UserIcon, Users } from 'lucide-react'
+import { useEffect } from 'react'; // Add this import
 
 const gameModes = [
   { 
@@ -25,6 +26,13 @@ const gameModes = [
 export default function GameModeSelection() {
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to the topic selection page on load
+    router.push('/topic-selection');
+  }, [router]);
+ 
+  
 
   const handleModeSelect = (modeId: string) => {
     setSelectedMode(modeId)

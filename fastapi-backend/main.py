@@ -4,6 +4,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from debate_agent import debate_agent
 from fastapi.middleware.cors import CORSMiddleware
+import json
 class DebateInput(BaseModel):
     topic: str
     pro_debator: str
@@ -53,28 +54,35 @@ async def debate(request: Request):
     
     # Get response from debate agent
     response = debate_agent(memory=memory, state=state)
+    greetings = ""
+    winner = ""  # You might need to determine this based on additional logic
     conversation = []
-    
+    print("Response from debate_agent:", response)
+        
+        
     # Since response is a list, we need to process it differently
+    
     for message in response:
-        if isinstance(message, dict):
-            # If it's a dictionary, process it as before
-            if 'greetings' in message:
-                conversation.append({
-                    'speaker': "Moderator",
-                    'content': message['greetings']
-                })
-        elif isinstance(message, (HumanMessage, AIMessage)):
-            # Process debate messages
-            speaker = debater1 if isinstance(message, HumanMessage) else debater2
+        if isinstance(message, SystemMessage) and message.name == 'greeting':
+            greetings = message.content
+        if isinstance(message, SystemMessage) and message.name == 'winner':
+            winner = message.content
+        elif isinstance(message, HumanMessage):
             conversation.append({
-                'speaker': speaker,
+                'speaker': debater1,
+                'content': message.content
+            })
+        elif isinstance(message, AIMessage):
+            conversation.append({
+                'speaker': debater2,
                 'content': message.content
             })
     
     response_data = {
+        'greetings': greetings,
         'conversation': conversation,
-        'debate_history': state.get('debate_history', [])
+        'debate_history': state.get('debate_history', []),
+        'winner': winner
     }
 
     return response_data
