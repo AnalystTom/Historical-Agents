@@ -14,6 +14,7 @@ export default function DebatePage() {
   const [greetings, setGreetings] = useState<string>('');
   const [conversation, setConversation] = useState<Message[]>([]);
   const [debateHistory, setDebateHistory] = useState<string[]>([]);
+
   const [isReady, setIsReady] = useState(false);
   const debater1Id = debater1 || 'unknown';
   const debater2Id = debater2 || 'unknown';
@@ -45,11 +46,7 @@ export default function DebatePage() {
         setConversation(data.conversation.map((msg: any, index: number) => ({
           id: index.toString(),
           sender: msg.speaker,
-          content: msg.content,
-          timestamp: new Date()
-        })));
-        setDebateHistory(data.debate_history);
-        setIsReady(true);
+
       } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
       }
@@ -57,6 +54,7 @@ export default function DebatePage() {
 
     fetchDebateData();
   }, [debate_topic, debater1, debater2]);
+
 
   if (!isReady) {
     return (
@@ -99,9 +97,6 @@ export default function DebatePage() {
       sender: 'system',
       content: history,
       timestamp: new Date()
-    }))
-  ];
-
 
   return (
     <div className="min-h-screen bg-gray-100">

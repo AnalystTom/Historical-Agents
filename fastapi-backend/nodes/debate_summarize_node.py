@@ -11,7 +11,7 @@ def debate_summarizer_node(state: State):
   """
 
   model = ChatGroq(
-    model="llama-3.1-70b-versatile",
+    model="llama-3.3-70b-versatile",
     temperature=0.5,
     api_key=os.getenv("GROQ_API_KEY")
   )
@@ -21,21 +21,40 @@ def debate_summarizer_node(state: State):
   debate_history = state['debate_history']
   anti_debator_response = state['anti_debator_response']
   pro_debator_response = state['pro_debator_response']
+  
   prompt = """
-            Summarize the conversation between the pro {pro_debator} and anti debator {anti_debator},
-            highlighting the key points of their arguments and discarding unnecessary points. The
-            summary should be concise and brief, with high quality.
-            **Instructions:**
-            * Focus on the core arguments presented by both sides.
-            * Identify the main points of agreement and disagreement.
-            * Provide a clear and objective overview of the debate.
-            * Avoid including irrelevant details or repetitive information.
-            * Ensure that the summary is easy to understand and informative.
-            **Pro Debator:**
-            {pro_debator_response}
-            **Anti Debator:**
-            {anti_debator_response}
-          """
+    You are an AI debate summarizer tasked with analyzing and summarizing the 
+    latest exchange between two debaters: {pro_debator} and 
+    {anti_debator} .  
+    Your role is to create a concise and accurate summary of their arguments, 
+    capturing the essence of the discussion for future reference.  
+
+    **Instructions:**  
+    1. **Focus on Key Points**: Highlight the central arguments presented by 
+    each debater.  
+    2. **Compare and Contrast**: Identify areas of agreement, if any, and key 
+    disagreements or rebuttals.  
+    3. **Clarity and Objectivity**: Ensure the summary is neutral, objective, 
+    and easy to understand. Avoid injecting opinions or commentary.  
+    4. **Avoid Irrelevance**: Discard repetitive, redundant, or irrelevant 
+    details to keep the summary concise.  
+    5. **Support Debate Continuity**: Ensure the summary can help in understanding 
+    the flow of arguments for future use.  
+
+    **Structure:**  
+    1. **Pro Debator's Key Points:**  
+      - Summarize {pro_debator}'s main arguments or rebuttals from the latest exchange.  
+    2. **Anti Debator's Key Points:**  
+      - Summarize {anti_debator}'s main arguments or rebuttals from the latest exchange.  
+    
+    **Inputs for Summary:**  
+    - **Pro Debator's Latest Response:**  
+      {pro_debator_response}  
+    - **Anti Debator's Latest Response:**  
+      {anti_debator_response}  
+
+    Craft a well-structured and concise summary that captures the essence of this exchange.
+  """
   system_message = prompt.format(
                       pro_debator=pro_debator,
                       pro_debator_response=pro_debator_response,

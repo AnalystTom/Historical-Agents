@@ -3,17 +3,20 @@ from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain_community.retrievers import WikipediaRetriever
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 
 from states.agent_state import State
+from states.additional_states import SearchQuery
+
+load_dotenv()
 
 def search_wikipedia(state: State):
-    """Retrieve docs from Wikipedia using WikipediaRetriever"""
-
+    """Retrieve docs from Wikipedia using WikipediaRetriever with optimized token usage"""
+    
     model = ChatGroq(
-      model="llama-3.1-70b-versatile",
-      temperature=0.5,
-      api_key=os.getenv("GROQ_API_KEY")
+        model="llama-3.3-70b-versatile",
+        temperature=0.5,
+        api_key=os.getenv("GROQ_API_KEY")
     )
 
     planner = state['planner']
@@ -22,48 +25,45 @@ def search_wikipedia(state: State):
     anti_debator = state['anti_debator']
     topic = state['topic']
 
+    # Simplified prompt templates
+    search_query_prompt = f"""
+        You are a Wikipedia search assistant. Your task is to generate a concise, 
+        relevant search query to retrieve the most accurate articles for the following 
+        participant:
+        - Debater: {pro_debator if isinstance(last_message, HumanMessage) else anti_debator}
+        - Topic: {topic}
+        - Planning Context: {planner}
 
-    search_query_prompt = ""
-    if isinstance(last_message, HumanMessage):
-      search_query_prompt = f"""
-        You are a search assistant generating a concise search query for Wikipedia.
-        Task:
-        Find the most relevant wikipedia articles for {pro_debator} related to
-        the topic {topic} taking into account the following planning:
-        {planner}
-        Output:
-        A single concise search query relevant to the topic.
+        Deliverable: A single, 30 characters, concise query (e.g., "Immigration_policy_of_Donald_Trump")
+        Note This is an example format only. Dont use it for answer.
 
-        Given debater Trump and topic illegal immigration provide Immigration_policy_of_Donald_Trump
-        as search query
-      """
-    elif isinstance(last_message, AIMessage):
-      search_query_prompt = f"""
-            You are a search assistant generating a concise search query for Wikipedia.
-            Task:
-            Find the most relevant wikipedia articles for {anti_debator} related to
-            the topic {topic}
-            Output:
-            A single concise search query relevant to the topic.
+        Ensure the query directly relates to the topic and reflects the debater's
+        position.
+    """
+    structure_llm = model.with_structured_output(SearchQuery)
+    search_query = structure_llm.invoke(search_query_prompt)
 
-           Given debater Trump and topic illegal immigration provide Immigration_policy_of_Donald_Trump
-          as search query
-          """
+    # Configure retriever with limits
+    retriever = WikipediaRetriever(
+        doc_content_chars_max=250,  # Limit character length
+        load_max_docs=1,             # Limit number of documents
+        load_all_available_meta=False # Only load essential metadata
+    )
 
-    search_query = model.invoke(search_query_prompt).content.strip()
+    # Get documents
+    search_docs = retriever.invoke(search_query.query)
 
-    print(f'Search Query: {search_query}\n')
-
-    retriever = WikipediaRetriever()
-
-    search_docs = retriever.invoke(search_query)
-    print(f'Search Docs: {search_docs}')
-
-    all_summaries = ""
+    # Extract and combine summaries more efficiently
+    summaries = []
     for doc in search_docs:
         if 'summary' in doc.metadata:
-            all_summaries += doc.metadata['summary'] + "\n\n"
-
-    state['context'].append(all_summaries)
-    print(f"Updated Context: {state['context']}")
+            # Take first 500 characters of each summary
+            summaries.append(doc.metadata['summary'][:500])
+    
+    # Join summaries with single newline
+    combined_summary = '\n'.join(summaries)
+    
+    # Update state with new context
+    state['context'].append(combined_summary)
+    
     return state

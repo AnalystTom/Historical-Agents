@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
-
+from langchain_groq import ChatGroq
 from states.agent_state import State
 
 load_dotenv()
@@ -11,10 +11,11 @@ load_dotenv()
 def pro_debator_node(state: State):
     """LangGraph node that represents the pro debator"""
 
-    gemini_model: ChatGoogleGenerativeAI = ChatGoogleGenerativeAI(model="gemini-1.5-flash",
-                                                            api_key=os.getenv("GOOGLE_API_KEY"),
-                                                            temperature=0.5,
-                                                            )
+    gemini_model = ChatGroq(
+      model="llama-3.3-70b-versatile",
+      temperature=0.5,
+      api_key=os.getenv("GROQ_API_KEY")
+    )
 
     topic = state['topic']
     anti_debator_response = state.get('anti_debator_response')
@@ -28,19 +29,18 @@ def pro_debator_node(state: State):
     if not anti_debator_response and not debate:
       # Greeting and opening argument scenario
       prompt_template = """
-          You are {pro_debator}, presenting the affirmative stance on the topic: "{topic}" in a debate.
-          Your goal is to deliver a strong and concise opening argument in favor of "{topic}" in no more than 3-4 sentences.
-          Your language should be conversational, persuasive, and directly relevant to the topic. Avoid lengthy introductions.
-
-          Guidelines:
-          1. **Persona Alignment**: Use language and phrases consistent with {pro_debator}'s persona.
-          2. **Clarity and Brevity**: Make your opening impactful but keep it conversational and limited to 3-4 sentences.
-          3. **Focus on Core Argument**: Present clear and logical points without unnecessary elaboration or excessive detail.
-          4. Take into account planning made by the planner {planner}
-
-          **Context (if applicable)**: {context}
-
-          Begin your opening statement.
+        You are {pro_debator}, advocating for the affirmative position on the topic: 
+        "{topic}".
+        
+        Deliverable: A strong and concise opening argument in favor of the topic 
+        (3-4 sentences max). Maintain the public persona, rhetorical style, and 
+        ideological clarity of {pro_debator}
+        
+        Guidelines:
+        * Stay aligned with {pro_debator}'s persona and style.
+        * Make the argument conversational, persuasive, and focused.
+        * Stick to the topic {topic} and your persona, rhetorical style and ideology
+        * Dont include any irrelevant things in the response like templates etc
       """
       system_message = prompt_template.format(
           pro_debator=pro_debator,
@@ -52,45 +52,42 @@ def pro_debator_node(state: State):
     else:
       # Responding to latest argument scenario
       prompt_template = """
-        You are {pro_debator}, presenting your affirmative stance on the topic:
-        "{topic}" in a debate.
-        Your task is to directly respond to the latest argument by {anti_debator}
-        in a concise and conversational manner, limited to 3-4 sentences.
-        Focus on addressing weaknesses, logical fallacies, or gaps in their
-        argument while maintaining a persuasive tone.
+        You are {pro_debator}, presenting your affirmative stance on the topic: 
+        "{topic}" in a debate. 
+        Your goal is to deliver strong, logical, and concise arguments that support 
+        "{topic}" while persuading the audience of your position.
 
-        Guidelines:
-        1. **Direct Rebuttal**: Address the latest response from {anti_debator}
-        directly.
-        2. **Persona Alignment**: Use language and phrases consistent with
-        {pro_debator}'s persona.
-        3. **Clarity and Brevity**: Keep your response impactful but limited
-        to 3-4 sentences.
-        4. **Avoid Redundancy**: Leverage details from the debate history to
-        strengthen your response without repeating previous arguments.
-        5. **Use Context**: Use relevant details from the context or debate
-        history (if applicable) to make your argument more credible.
-        6. Take into account planning made by the planner {planner}
+        - Address the latest points raised by {anti_debator} in **3-4 sentences**.  
+        - Focus on refuting their arguments by highlighting logical flaws, 
+        unsupported claims, or weaknesses, while presenting evidence to 
+        strengthen your position.  
+        - Maintain a conversational and persuasive tone.  
 
-          **Debate History**:
-        {debate_history}
+        **General Guidelines:**  
+        1. **Persona Alignment**: Use language and phrases consistent with 
+        {pro_debator}'s persona and known debate style.  
+        2. **Clarity and Brevity**: Ensure arguments are logical, concise, and 
+        impactful.  
+        3. **Debate Continuity**: Use relevant points from the debate history 
+        to avoid redundancy and add depth.  
+        4. **Planning Context**: Take into account insights or strategies from 
+        the planning stage ({planner}) and wikipedia and web search results {context}.  
 
-        **Latest Argument from {anti_debator}**:
-        {anti_debator_response}
+        **Debate History :**  
+        {debate_history}  
 
-        **Context**:
-        {context}
+        **Latest Argument from {anti_debator}:**  
+        {anti_debator_response}  
 
-        Craft your rebuttal.
       """
       system_message = prompt_template.format(
-          pro_debator=pro_debator,
-          topic=topic,
-          anti_debator=anti_debator,
-          debate_history=debate_history,
-          anti_debator_response=anti_debator_response,
-          context=context,
-          planner=planner
+        pro_debator=pro_debator,
+        topic=topic,
+        anti_debator=anti_debator,
+        debate_history=debate_history,
+        anti_debator_response=anti_debator_response,
+        planner=planner,
+        context={context}
       )
 
     pro_debator_response_content = gemini_model.invoke(system_message).content

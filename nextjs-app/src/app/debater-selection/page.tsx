@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'; // Correct import for App Router
 
 const debaters: Debater[] = [
     {
-      id: 'benjamin-netanyahu',
+      id: 'Benjamin Netanyahu',
       name: 'Benjamin Netanyahu',
       image: '/netanyahu.jpg',
       yearsActive: '1949-Present',
@@ -24,7 +24,7 @@ const debaters: Debater[] = [
       style: 'Strategic and diplomatic'
     },
     {
-      id: 'norman-finkelstein',
+      id: 'Norman Finkelstein',
       name: 'Norman Finkelstein',
       image: '/finkelstein.jpg',
       yearsActive: '1953-Present',
@@ -55,11 +55,7 @@ const debaters: Debater[] = [
     }
   ]
 
-  // ... existing imports ...
 
-// ... existing imports ...
-
-// ... existing imports ...
 
 export default function DebaterSelection() {
   const [selectedDebaters, setSelectedDebaters] = useState<string[]>([]);

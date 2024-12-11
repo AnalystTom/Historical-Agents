@@ -31,7 +31,7 @@ from langchain_groq import ChatGroq
 from langgraph.graph import MessagesState
 from langgraph.graph.state import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
-
+from langchain_community.tools import DuckDuckGoSearchResults
 # [Add other necessary imports from your original code]
 
 
@@ -45,6 +45,8 @@ from pydantic import BaseModel, Field
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.document_loaders import WikipediaLoader
 from langchain_community.retrievers import WikipediaRetriever
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.tools import DuckDuckGoSearchResults
 from langchain_groq import ChatGroq
 
 from langgraph.graph import MessagesState
@@ -110,26 +112,29 @@ memory = MemorySaver()
 #   iteration: int
 #   max_iteration: int
 
+class DebateHistory(BaseModel):
+  debate_history: List[str] = Field(description="A variable that stores summary of every debate round")
+
+class AntiDebateResponse(BaseModel):
+  anti_debator_response: str = Field(description="The anti-debator's response to the latest argument")
+
+class ProDebateResponse(BaseModel):
+  pro_debator_response: str = Field(description="The pro-debator's response to the latest argument")
+
 class State(TypedDict):
   topic: str
   pro_debator: str
   anti_debator: str
   greetings: str
-  pro_debator_response: str
-  anti_debator_response: str
+  pro_debator_response: ProDebateResponse
+  anti_debator_response: AntiDebateResponse
   context: Annotated[list, add_messages]
   debate: Annotated[list, add_messages]
-  debate_history: List[str]
+  debate_history: DebateHistory
   planner: str
   winner: str
   iteration: int
   max_iteration: int
-
-class SearchQuery(BaseModel):
-  search_query: str = Field(description="The search query for retrieval")
-
-structure_llm = model.with_structured_output(SearchQuery)
-structure_llm
 
 def measure_time(node_function):
     """Decorator to measure and log the execution time of a node function."""
@@ -151,58 +156,29 @@ def measure_time(node_function):
 
 @measure_time
 def greeting_node(state: State):
-  """LangGraph node that greets the debators and introduces them"""
-  print("Greeting Node")
-  topic = state['topic']
-  pro_debator = state['pro_debator']
-  anti_debator = state['anti_debator']
+    """LangGraph node that greets the debaters and introduces them"""
+    topic = state['topic']
+    pro_debator = state['pro_debator']
+    anti_debator = state['anti_debator']
 
-  prompt = f"""
-        Welcome the audience to a lively debate between {pro_debator} and {anti_debator} on {topic}.
+    prompt = f"""
+    You are a professional and unbiased debate host introducing a debate between two participants:
+    - {pro_debator}, who supports the topic.
+    - {anti_debator}, who opposes the topic.
+    Topic: "{topic}"
+    Instructions:
+    1. Clearly and briefly introduce the participants and the topic to the audience.
+    2. Avoid opinions, commentary, or humor. Maintain a formal and neutral tone.
+    3. Do not include information not provided in this prompt. Keep the introduction concise, no more than 3 sentences.
+    4. Ensure the output is free from errors or irrelevant content.
+    Format:
+    - Start by welcoming the audience.
+    - Introduce the participants and their respective backgrounds.
+    - Introduce the topic of debate like a host.
+    """
 
-        {pro_debator} champions the "Pro" side, and {anti_debator} defends the "Against" side.
-        Introduce them warmly in under 40 words, keeping it fun and engaging!
-            """
-
-  greetings = model.invoke(prompt).content
-  return {"greetings": greetings}
-
-from pymongo import MongoClient
-from langchain.text_splitter import CharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-from datetime import datetime
-from transformers import pipeline
-from datetime import datetime
-
-# Connect to MongoDB
-client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
-db = client["personaDB"]
-collection = db["conversionChunkLog"]
-
-# Load embedding model (offline)
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Replace with your chosen offline model
-
-def store_debate_summary(turn, role, position, text):
-        # Initialize the summarization pipeline with a smaller model
-    summarizer = pipeline("summarization", model="t5-small", tokenizer="t5-small")
-
-    # Summarize the text into a maximum of 10 sentences
-    summary = summarizer(text, max_length=130, min_length=50, do_sample=False)[0]['summary_text']
-
-    # Create the document
-    document = {
-        "turn": turn,
-        "role": role,
-        "summarized_text": summary,
-        "position": position,
-        "timestamp": datetime.utcnow()
-    }
-
-    # Insert the document into MongoDB
-    collection.insert_one(document)
-
-
-
+    greetings = model.invoke(prompt).content
+    return {"greetings": greetings}
 
 @measure_time
 def planning_node(state: State):
@@ -313,7 +289,6 @@ def planning_node(state: State):
     state['planner'] = model.invoke(system_message).content
     return state
 
-
 @measure_time
 def search_web(state: State):
     """LangGraph node that do a DuckDuckGo search and append the results to context."""
@@ -347,8 +322,6 @@ def search_web(state: State):
     state['context'].append(result)
     return {"context": state['context']}
 
-
-
 @measure_time
 def search_wikipedia(state: State):
     """Retrieve docs from Wikipedia using WikipediaRetriever"""
@@ -368,7 +341,8 @@ def search_wikipedia(state: State):
         Find the most relevant wikipedia articles for {pro_debator} related to
         the topic {topic} taking into account the following planning:
         {planner}
-
+        Output format:
+        A single concise search query relevant to the topic that has a corresponding name in wikipedia
       """
     elif isinstance(last_message, AIMessage):
       search_query_prompt = f"""
@@ -376,7 +350,9 @@ def search_wikipedia(state: State):
             Task:
             Find the most relevant wikipedia articles for {anti_debator} related to
             the topic {topic}
-
+            Output format:
+            A single concise search query relevant to the topic that has a corresponding name in wikipedia
+          """
 
     search_query = model.invoke(search_query_prompt).content.strip()
 
@@ -396,310 +372,194 @@ def search_wikipedia(state: State):
     print(f"Updated Context: {state['context']}")
     return state
 
-
-def router(state: State):
-    """LangGraph node that routes to the appropriate search function"""
-    debate_history = state["debate_history"]
-    if debate_history == []:
-        return "Pro Debator"
-    else:
-      return "Planner"
-
-
-def iteration_router(state: State):
-    """Routes the flow based on the current iteration and max_iteration"""
-    if state['iteration'] >= state['max_iteration']:
-        print("Ending the debate as max iteration is reached.")
-        return "Winner Decider"
-    print(f"Iteration Round: {state['iteration']}")
-    state['iteration'] += 1
-    return "Planner"
-
-
-def analyzer_router(state: State):
-    """Function that routes to the appropriate next node"""
-    debate = state['debate']
-    last_message = debate[-1]
-    if isinstance(last_message, AIMessage):
-        return "Pro Debator"
-    else:
-        return "Anti Debator"
-
-
-from pymongo import MongoClient
-from langchain.text_splitter import CharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-from datetime import datetime
-
-# Connect to MongoDB
-client = MongoClient("mongodb+srv://user:BUiIZW9wSnqgPbhN@histcluster.lijlj.mongodb.net/personaDB?retryWrites=true&w=majority")
-db = client["personaDB"]
-collection = db["conversionChunkLog"]
-
-# Load embedding model (offline)
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # Replace with your chosen offline model
-
-def store_debate_chunk(turn, role, position, text):
-    # Split text into chunks
-    text_splitter = CharacterTextSplitter(separator=". ", chunk_size=200, chunk_overlap=50)
-    chunks = text_splitter.split_text(text)
-    
-    # Process each chunk
-    for chunk_number, chunk_text in enumerate(chunks, start=1):
-        embedding = embedding_model.encode(chunk_text).tolist()
-        document = {
-            "turn": turn,
-            "role": role,
-            "chunk_number": chunk_number,
-            "chunk_text": chunk_text,
-            "position": position,
-            "embedding": embedding,
-            "timestamp": datetime.utcnow()
-        }
-        # Insert document into MongoDB
-        collection.insert_one(document)
-
 @measure_time
 def pro_debator_node(state: State):
     """LangGraph node that represents the pro debator"""
-    print("Pro Debator Node")
 
-    # Extract state variables
     topic = state['topic']
-    anti_debator_response = state['anti_debator_response']
+    anti_debator_response = state.get('anti_debator_response')
     pro_debator = state['pro_debator']
     anti_debator = state['anti_debator']
-    debate_history = state['debate_history']
-    debate = state['debate']
-    curr_iter = state['iteration']
+    debate_history = state.get('debate_history', [])
+    planner = state.get("planner", "")
+    debate = state.get('debate', [])
+    context = state.get('context', "")
 
-    # Initial debate opening
-    if anti_debator_response is None and not debate:
-        prompt_template = """Role: You are {pro_debator} in a formal debate setting.
+    if not anti_debator_response and not debate:
+      # Greeting and opening argument scenario
+      prompt_template = """
+          You are {pro_debator}, presenting the affirmative stance on the topic: "{topic}" in a debate.
+          Your goal is to deliver a strong and concise opening argument in favor of "{topic}" in no more than 3-4 sentences.
+          Your language should be conversational, persuasive, and directly relevant to the topic. Avoid lengthy introductions.
 
-        Topic: "{topic}"
+          Guidelines:
+          1. **Persona Alignment**: Use language and phrases consistent with {pro_debator}'s persona.
+          2. **Clarity and Brevity**: Make your opening impactful but keep it conversational and limited to 3-4 sentences.
+          3. **Focus on Core Argument**: Present clear and logical points without unnecessary elaboration or excessive detail.
+          4. Take into account planning made by the planner {planner}
 
-        Instructions:
-        - Present a strong opening argument supporting your historical position on {topic}
-        - Use your characteristic speaking style, mannerisms, and common phrases
-        - Draw from your known policy positions and public statements
-        - Keep the response focused on policy and facts
-        - Speak in first person as {pro_debator}
+          **Context (if applicable)**: {context}
 
-        Format your response as a natural speaking debate opening, addressing the moderator and audience appropriately.
-        """
-
-        system_message = SystemMessage(content=prompt_template.format(
-            topic=topic,
-            pro_debator=pro_debator,
-            anti_debator=anti_debator
-        ))
-        messages = [system_message]
+          Begin your opening statement.
+      """
+      system_message = prompt_template.format(
+          pro_debator=pro_debator,
+          anti_debator=anti_debator,
+          planner=planner,
+          topic=topic,
+          context=context
+      )
     else:
-        # Responding to opponent
-        context = state['context']
-        prompt_template = """Role: You are {pro_debator} in an ongoing debate.
+      # Responding to latest argument scenario
+      prompt_template = """
+        You are {pro_debator}, presenting your affirmative stance on the topic:
+        "{topic}" in a debate.
+        Your task is to directly respond to the latest argument by {anti_debator}
+        in a concise and conversational manner, limited to 3-4 sentences.
+        Focus on addressing weaknesses, logical fallacies, or gaps in their
+        argument while maintaining a persuasive tone.
 
-        Topic: "{topic}"
+        Guidelines:
+        1. **Direct Rebuttal**: Address the latest response from {anti_debator}
+        directly.
+        2. **Persona Alignment**: Use language and phrases consistent with
+        {pro_debator}'s persona.
+        3. **Clarity and Brevity**: Keep your response impactful but limited
+        to 3-4 sentences.
+        4. **Avoid Redundancy**: Leverage details from the debate history to
+        strengthen your response without repeating previous arguments.
+        5. **Use Context**: Use relevant details from the context or debate
+        history (if applicable) to make your argument more credible.
+        6. Take into account planning made by the planner {planner}
 
-        Recent opponent ({anti_debator}) statement:
-        {anti_debator_response}
-
-        Debate context:
+          **Debate History**:
         {debate_history}
 
-        Additional context:
+        **Latest Argument from {anti_debator}**:
+        {anti_debator_response}
+
+        **Context**:
         {context}
 
-        Instructions:
-        - Directly address and counter the points made by {anti_debator}
-        - Maintain your known position and policy stance on {topic}
-        - Use your characteristic speaking style and mannerisms
-        - Support arguments with specific examples and facts
-        - Keep response concise (2-4 sentences)
-        - Speak in first person as {pro_debator}
+        Craft your rebuttal.
+      """
+      system_message = prompt_template.format(
+          pro_debator=pro_debator,
+          topic=topic,
+          anti_debator=anti_debator,
+          debate_history=debate_history,
+          anti_debator_response=anti_debator_response,
+          context=context,
+          planner=planner
+      )
 
-        Format your response as a natural rebuttal in a debate setting.
-        """
+    pro_debator_response_content = model.invoke(system_message).content
 
-        system_message = SystemMessage(content=prompt_template.format(
-            topic=topic,
-            pro_debator=pro_debator,
-            anti_debator=anti_debator,
-            debate_history=debate_history,
-            anti_debator_response=anti_debator_response,
-            context=context
-        ))
-
-        messages = [system_message]
-
-    # Generate response using the model
-    response = model.invoke(messages)
-    pro_debator_response_content = response.content
-
-    # Store chunks in MongoDB with embeddings
-    store_debate_summary(
-        turn=curr_iter,
-        role="pro_debator",
-        position="pro",
-        text=pro_debator_response_content
-    )
-
-    # Create a HumanMessage with the response content
     pro_debator_response = HumanMessage(
         content=f"{pro_debator}: {pro_debator_response_content}",
         name="pro_response"
     )
 
-    # Update debate history
     debate.append(pro_debator_response)
-
     return {"pro_debator_response": pro_debator_response, "debate": debate}
-
-
 
 @measure_time
 def anti_debator_node(state: State):
     """LangGraph node that represents the anti debator"""
-    print("Anti Debator Node")
-
-    # Extract state variables
     topic = state['topic']
-    pro_debator_response = state['pro_debator_response']
+    anti_debator_response = state.get('anti_debator_response')
     pro_debator = state['pro_debator']
     anti_debator = state['anti_debator']
-    debate_history = state['debate_history']
-    debate = state['debate']
-    context = state['context']
-    curr_iter = state['iteration']
+    debate_history = state.get('debate_history', [])
+    debate = state.get('debate', [])
+    context = state.get('context', "")
+    planner = state.get('planner', "")
 
-    # Get the latest pro debator response
-    latest_pro_response = pro_debator_response.content if pro_debator_response else ""
+    # Improved prompt with guardrails
+    prompt_template = """
+        You are {anti_debator}, presenting your opposing stance on the topic: "{topic}" in a debate.
+        Your task is to craft a direct and concise rebuttal to the latest argument provided by {pro_debator}.
+        The opinion should reflect a real stance that {anti_debator} has taken on the topic "{topic}" and align with their persona.
 
-    # Prompt for anti-debator's response
-    prompt_template = """Role: You are {anti_debator} participating in a formal debate.
+        Guidelines for crafting your rebuttal:
+        1. **Direct Rebuttal**: Respond specifically to the latest argument from {pro_debator}. Address any logical flaws, missing evidence, or weak points while maintaining a respectful tone.
+        2. **Clarity and Brevity**: Limit your response to no more than 3 sentences. Ensure it is conversational, impactful, and easy to follow.
+        3. **Debate Continuity**: Use relevant details from the debate history (if provided) to strengthen your response while avoiding redundancy.
+        4. **Persona Consistency**: Use language, phrases, and tone that align with {anti_debator}'s persona and style of communication.
+        5. **Guardrails**: Avoid unsupported claims, personal attacks, or unrelated points. Stick to the topic and present logical arguments.
+        6. **Use of Context**: Incorporate credible evidence or insights from the provided context (if applicable) to make your argument more persuasive.
+        7. Take into account planning made by the planner {planner}
 
-    Topic: "{topic}"
+        **Context (if applicable)**:
+        {context}
 
-    Latest statement by {pro_debator}:
-    {latest_pro_response}
+        **Debate History (recent exchanges)**:
+        {debate_history}
 
-    Debate history:
-    {debate_history}
+        **Latest Argument from {pro_debator}**:
+        {pro_debator_response}
 
-    Available context:
-    {context}
-
-    Instructions:
-    1. Speaking Style:
-       - Use your characteristic speaking patterns, catchphrases, and mannerisms
-       - Maintain your well-known personality traits and debate style
-       - Address both the moderator and your opponent as appropriate
-
-    2. Content Guidelines:
-       - Directly counter the points made by {pro_debator}
-       - Present your known stance and policy positions on {topic}
-       - Use specific examples and facts to support your arguments
-       - Draw from your public statements and previous positions on this issue
-       - Keep response focused and concise (2-4 sentences)
-
-    3. Debate Strategy:
-       - Challenge the assumptions in your opponent's argument
-       - Highlight any inconsistencies or weaknesses
-       - Present alternative solutions or perspectives
-       - Emphasize the practical implications of your position
-
-    Remember: Stay in character as {anti_debator} throughout your response. Format your response as a natural rebuttal in a debate setting, speaking in first person.
+        **Your Rebuttal**:
     """
 
-    # Create system message
-    system_message = SystemMessage(content=prompt_template.format(
+    # Generate the system message for the model
+    system_message = prompt_template.format(
         topic=topic,
         pro_debator=pro_debator,
-        latest_pro_response=latest_pro_response,
+        pro_debator_response=anti_debator_response,
         anti_debator=anti_debator,
         debate_history=debate_history,
-        context=context
-    ))
-
-    # Generate response using the model
-    anti_debator_response_content = model.invoke([system_message]).content
-
-    # Store chunks in MongoDB with embeddings
-    store_debate_summary(
-        turn=curr_iter,
-        role="anti_debator",
-        position="opp",
-        text=anti_debator_response_content
+        context=context,
+        planner=planner
     )
 
-    # Create an AIMessage with the response content
+    anti_debator_response_content = model.invoke(system_message).content
+
     anti_debator_response = AIMessage(
         content=f"{anti_debator}: {anti_debator_response_content}",
         name="anti_response"
     )
 
-    # Update debate history
     debate.append(anti_debator_response)
-
-    return {
-        "anti_debator_response": anti_debator_response,
-        "debate": debate
-    }
-
+    return {"anti_debator_response": anti_debator_response, "debate": debate}
 
 @measure_time
 def debate_summarizer_node(state: State):
-    """
-    LangGraph node that summarizes the exchange of arguments between debators
-    and appends to history for future consideration.
-    """
-    # Extracting relevant state information
-    pro_debator = state['pro_debator']
-    anti_debator = state['anti_debator']
-    debate_history = state['debate_history']
-    pro_debator_response = state['pro_debator_response']
-    anti_debator_response = state['anti_debator_response']
-
-    # Prompt for summarization
-    prompt = """
-    Summarize the conversation between the pro debator ({pro_debator}) 
-    and anti debator ({anti_debator}), highlighting the key points of their arguments 
-    and discarding unnecessary points.
-
-    **Instructions:**
-    - Focus on the core arguments presented by both sides.
-    - Identify the main points of agreement and disagreement.
-    - Provide a clear and objective overview of the debate.
-    - Avoid including irrelevant details or repetitive information.
-    - Ensure that the summary is easy to understand and informative.
-    - Keep the summary concise and approximately 1 paragraph.
-
-    **Pro Debator's Arguments:**
-    {pro_debator_response}
-
-    ------------------------
-
-    **Anti Debator's Arguments:**
-    {anti_debator_response}
-    """
-
-    # Formatting the system message
-    system_message = prompt.format(
-        pro_debator=pro_debator,
-        anti_debator=anti_debator,
-        pro_debator_response=pro_debator_response,
-        anti_debator_response=anti_debator_response
-    )
-
-    # Generating summary using the model
-    summary = model.invoke(system_message).content
-
-    # Appending the summary to the debate history
-    debate_history.append(summary)
-
-    return {"debate_history": debate_history}
-
+  """LangGraph node that summarizes the exchange of arguments between debator
+  and append to history for future consideration
+  """
+  pro_debator = state['pro_debator']
+  anti_debator = state['anti_debator']
+  debate_history = state['debate_history']
+  anti_debator_response = state['anti_debator_response']
+  pro_debator_response = state['pro_debator_response']
+  prompt = """
+            Summarize the conversation between the pro {pro_debator} and anti debator {anti_debator},
+            highlighting the key points of their arguments and discarding unnecessary points. The
+            summary should be concise and brief, with high quality.
+            **Instructions:**
+            * Focus on the core arguments presented by both sides.
+            * Identify the main points of agreement and disagreement.
+            * Provide a clear and objective overview of the debate.
+            * Avoid including irrelevant details or repetitive information.
+            * Ensure that the summary is easy to understand and informative.
+            **Pro Debator:**
+            {pro_debator_response}
+            **Anti Debator:**
+            {anti_debator_response}
+          """
+  system_message = prompt.format(
+                      pro_debator=pro_debator,
+                      pro_debator_response=pro_debator_response,
+                      anti_debator=anti_debator,
+                      anti_debator_response=anti_debator_response,
+                    )
+  summary = model.invoke(system_message).content
+  debate_history.append(summary)
+  state['debate_history'] = debate_history
+  state['iteration'] += 1
+  print(f"Updated Iteration: {state['iteration']}")
+  return state
 
 @measure_time
 def winner_decider_node(state: State):
@@ -740,12 +600,43 @@ def winner_decider_node(state: State):
   winner = model.invoke(system_message).content
   return {"winner": winner}
 
+def router(state: State):
+    """LangGraph node that routes to the appropriate search function"""
+    debate_history = state["debate_history"]
+    if debate_history == []:
+        return "Pro Debator"
+    else:
+      return "Planner"
+
+
+def iteration_router(state: State):
+    """Routes the flow based on the current iteration and max_iteration"""
+    if state['iteration'] >= state['max_iteration']:
+        print("Ending the debate as max iteration is reached.")
+        return "Winner Decider"
+    print(f"Iteration Round: {state['iteration']}")
+    state['iteration'] += 1
+    return "Planner"
+
+
+def analyzer_router(state: State):
+    """Function that routes to the appropriate next node"""
+    debate = state['debate']
+    last_message = debate[-1]
+    if isinstance(last_message, AIMessage):
+        return "Pro Debator"
+    else:
+        return "Anti Debator"
+
+
+
 builder = StateGraph(State)
 # Add nodes
 builder.add_node("Greetings", greeting_node)
 builder.add_node("Pro Debator", pro_debator_node)
 builder.add_node("Planner", planning_node)
-
+#builder.add_node("Search Web", search_web)
+builder.add_node("Search Wikipedia", search_wikipedia)
 builder.add_node("Anti Debator", anti_debator_node)
 builder.add_node("Debate Summarizer", debate_summarizer_node)
 builder.add_node('Winner Decider', winner_decider_node)
@@ -753,7 +644,10 @@ builder.add_node('Winner Decider', winner_decider_node)
 # Add edges
 builder.add_edge(START, "Greetings")
 builder.add_conditional_edges("Greetings", router, ['Planner', 'Pro Debator'])
-
+#builder.add_edge("Planner", "Search Web")
+builder.add_edge("Planner", "Search Wikipedia")
+#builder.add_conditional_edges("Search Web", analyzer_router, ["Pro Debator", "Anti Debator"])
+builder.add_conditional_edges("Search Wikipedia", analyzer_router, ["Pro Debator", "Anti Debator"])
 
 
 builder.add_edge("Pro Debator", "Planner")
@@ -765,32 +659,7 @@ builder.add_conditional_edges(
 )
 builder.add_edge("Winner Decider", END)
 
-
-# Compile the graph
 debator = builder.compile(checkpointer=memory).with_config(run_name="Starting Debate")
-
-# Display the graph
-display(Image(debator.get_graph().draw_mermaid_png()))
-
-
-# state = {
-#     "topic": "Ukraine War",
-#     "pro_debator": "Joe Biden",
-#     "anti_debator": "Donald Trump",
-#     "greetings": "",
-#     "analysis": "",
-#     "pro_debator_response": "",
-#     "anti_debator_response": "",
-#     "context": [],
-#     "debate": [],
-#     "debate_history": [],
-#     "iteration": 0,
-#     "max_iteration": 1
-# }
-
-# thread = {"configurable": {"thread_id": "32"}}
-# result = debator.invoke(state, thread)
-# result
 
 @app.post("/trigger_workflow")
 async def trigger_workflow(request: Request):
@@ -798,7 +667,7 @@ async def trigger_workflow(request: Request):
     debate_topic = data.get('debate_topic')
     debater1 = data.get('debater1')
     debater2 = data.get('debater2')
-    max_iterations = data.get('max_iterations', 3)
+    max_iterations = data.get('max_iterations', 1)
 
     # Initialize state
     state = {
@@ -824,24 +693,29 @@ async def trigger_workflow(request: Request):
 
     # Prepare the conversation history in JSON format
     conversation = []
-    for message in result['debate']:
-        # Determine the speaker based on the message type
-        if isinstance(message, HumanMessage):
-            speaker = debater1
-        elif isinstance(message, AIMessage):
-            speaker = debater2
-        else:
-            speaker = "System"
-
+    if result['pro_debator_response']:
         conversation.append({
-            'speaker': speaker,
-            'content': message.content
+            'speaker': debater1,
+            'content': result['pro_debator_response'].content
+        })
+
+    if result['anti_debator_response']:
+        conversation.append({
+            'speaker': debater2,
+            'content': result['anti_debator_response'].content
+        })
+
+
+
+    if result.get('winner'):
+        conversation.append({
+            'speaker': "Winner Decider",
+            'content': result['winner']
         })
 
     response = {
         'greetings': result['greetings'],
-        'conversation': conversation,
-        'debate_history': result['debate_history']
+        'conversation': conversation
     }
 
     return response

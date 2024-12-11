@@ -9,10 +9,10 @@ from states.agent_state import State
 load_dotenv()
 
 def planning_node(state: State):
-    """LangGraph node that analyzes the latest argument for web search"""
+    """LangGraph node that analyzes the latest argument and prepare a plan to come with a stronger argument"""
 
     model = ChatGroq(
-      model="llama-3.1-70b-versatile",
+      model="llama-3.3-70b-versatile",
       temperature=0.5,
       api_key=os.getenv("GROQ_API_KEY")
     )
@@ -28,48 +28,23 @@ def planning_node(state: State):
     if isinstance(last_message, HumanMessage):
       print("Planning for Anti Debator")
       planning_prompt = """
-        You are an expert in debate strategy. Your task is to help the anti-debator
-        {anti_debator} craft
-        a compelling counter-argument to the pro-debator's, {pro_debator}, arguments on the debate topic:
-        {topic}.
-        Here's the information you have:
-        * **Pro-Debator's Argument:** {last_message}
-        Generate an actionable plan with the following structure:
-        **1. Identify Weaknesses:** Analyze the pro-debator's argument. Pinpoint logical
-        fallacies, weak points, unsupported claims, or areas where more evidence is needed.
-        **2. Research and Evidence Gathering:** Suggest specific research avenues to find
-        evidence that refutes the pro-debator's argument.  Provide concrete examples of
-        sources and keywords.
-        **3. Counter-Argument Formulation:** Outline the main points of a counter-argument.
-        Each point should directly address a weakness in the pro-debator's argument and be
-        supported by the suggested research.
-        **4. Rebuttals:** Anticipate the pro-debator's possible rebuttals and suggest
-        preemptive counter-rebuttals.
-        **5. Presentation Strategy:** Outline how to present the counter-argument
-        effectively:
-            * Should the anti-debator focus on emotion or logic?
-            * What rhetorical devices would be effective?
-            * How to present the evidence concisely and persuasively?
-        Example Output:
-        **1. Identify Weaknesses:** The pro-debator's argument relies on a study from
-        2010, which may be outdated.  They also don't address the economic impact of
-        their proposal.
+        You are an expert debate strategist tasked with helping {pro_debator} respond 
+        to {anti_debator}'s argument on the topic: "{topic}".
 
-        **2. Research and Evidence Gathering:** Search for more recent studies on the
-        topic. Look for economic analyses of similar proposals. Search terms: "[topic]
-        economic impact," "[topic] recent studies," etc.  Look for credible sources
-        such as peer-reviewed journals.
-        **3. Counter-Argument Formulation:**
-            * Point 1: The 2010 study is outdated and newer research contradicts its findings.
-            * Point 2: The proposal has significant negative economic consequences.
-        **4. Rebuttals:** The pro-debator might argue that the newer studies are biased.
-        Prepare to address this by presenting evidence of the studies' methodology and
-        peer review.
-        **5. Presentation Strategy:** Emphasize the economic impact and present the data
-        visually. Maintain a logical, calm demeanor. Use statistics and specific examples
-        instead of generalizations.
+        Input:
+        * Anti-Debator's Argument: {last_message}
 
-        Ensure the plan is specific to the given information.
+        Deliverable: A detailed plan with the following sections:
+        1. **Identify Weaknesses**: Analyze the anti-debator's argument for logical 
+        flaws or gaps.
+        2. **Research Suggestions**: Recommend specific sources or keywords to support 
+        your counterpoints.
+        3. **Counter-Argument Strategy**: Provide a structured response that directly 
+        addresses the weaknesses identified.
+        4. **Rebuttal Preparation**: Anticipate potential rebuttals and suggest concise, 
+        impactful counter-rebuttals.
+        5. **Presentation Tips**: Offer suggestions for delivering the counter-argument 
+        persuasively and effectively.
       """
 
       system_message = planning_prompt.format(
