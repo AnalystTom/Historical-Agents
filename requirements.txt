@@ -20,6 +20,7 @@ fastapi==0.115.4
 frozenlist==1.5.0
 graphviz==0.20.3
 greenlet==3.1.1
+groq==0.12.0
 h11==0.14.0
 httpcore==1.0.6
 httptools==0.6.4
@@ -37,6 +38,7 @@ jupyter_core==5.7.2
 langchain==0.3.7
 langchain-community==0.3.5
 langchain-core==0.3.15
+langchain-groq==0.2.1
 langchain-openai==0.2.8
 langchain-text-splitters==0.3.2
 langgraph==0.2.45

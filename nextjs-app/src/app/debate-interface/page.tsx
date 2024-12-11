@@ -14,7 +14,7 @@ export default function DebatePage() {
   const [greetings, setGreetings] = useState<string>('');
   const [conversation, setConversation] = useState<Message[]>([]);
   const [debateHistory, setDebateHistory] = useState<string[]>([]);
-  const [debateWinner, setWinner] = useState<string>('');
+
   const [isReady, setIsReady] = useState(false);
   const debater1Id = debater1 || 'unknown';
   const debater2Id = debater2 || 'unknown';
@@ -46,12 +46,7 @@ export default function DebatePage() {
         setConversation(data.conversation.map((msg: any, index: number) => ({
           id: index.toString(),
           sender: msg.speaker,
-          content: formatContent(msg.content),
-          timestamp: new Date()
-        })));
-        setWinner(formatContent(data.winner)); // Format the winner content
-        setDebateHistory(data.debate_history.filter((entry: string) => !entry.includes('Summarizer'))); // Filter out summarizer
-      setIsReady(true);
+
       } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
       }
@@ -60,14 +55,6 @@ export default function DebatePage() {
     fetchDebateData();
   }, [debate_topic, debater1, debater2]);
 
-  const formatContent = (content: string) => {
-    // Use regular expressions to insert newlines before specific patterns
-    return content
-      .replace(/(\d+\))/g, '\n$1') // Inserts a newline before each numbered point
-      .replace(/(Main Points of Disagreement, \d+)/g, '\n$1')
-      .replace(/(Objective Overview)/g, '\n$1')
-      .replace(/(Main Points of Agreement, \d+)/g, '\n$1');
-  };
 
   if (!isReady) {
     return (
@@ -110,9 +97,6 @@ export default function DebatePage() {
       sender: 'system',
       content: history,
       timestamp: new Date()
-    })),
-    { id: 'winner', sender: 'system', content: debateWinner, timestamp: new Date() } // Add winner to messages
-  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -123,5 +107,6 @@ export default function DebatePage() {
         messages={combinedMessages}
      />
     </div>
+
   )
 }

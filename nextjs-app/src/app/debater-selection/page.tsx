@@ -56,6 +56,7 @@ const debaters: Debater[] = [
   ]
 
 
+
 export default function DebaterSelection() {
   const [selectedDebaters, setSelectedDebaters] = useState<string[]>([]);
   const [customDebater1, setCustomDebater1] = useState<string>('');

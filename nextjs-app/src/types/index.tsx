@@ -32,4 +32,4 @@ export interface DebateChatInterfaceProps {
   topic: string; // Add this line if it's missing
   debaters: Debater[];
   messages: Message[];
-}
+
