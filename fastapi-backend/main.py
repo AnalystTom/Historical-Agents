@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
 from debate_agent import debate_agent
-from fastapi.middleware.cors import CORSMiddleware
-import json
+
 class DebateInput(BaseModel):
     topic: str
     pro_debator: str
@@ -22,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get('/')
 async def root():
     return {"message": "Debate App"}
@@ -38,13 +41,13 @@ async def debate(request: Request):
         "topic": debate_topic,
         "pro_debator": debater1,
         "anti_debator": debater2,
-        "greetings": "",
-        "planning": "",
-        "pro_debator_response": "",
-        "anti_debator_response": "",
+        "pro_debator_response": None,
+        "anti_debator_response": None,
         "context": [],
         "debate": [],
         "debate_history": [],
+        "planner": "",
+        "winner": None,
         "iteration": 0,
         "max_iteration": max_iterations,
         "winner": "",

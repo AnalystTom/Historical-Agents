@@ -1,9 +1,15 @@
 import os
 from dotenv import load_dotenv
+
 from langchain_groq import ChatGroq
 from langchain_community.retrievers import WikipediaRetriever
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import HumanMessage
+
 from states.agent_state import State
+from states.additional_states import SearchQuery
+
+load_dotenv()
+
 def search_wikipedia(state: State):
     """Retrieve docs from Wikipedia using WikipediaRetriever with optimized token usage"""
     
@@ -13,15 +19,29 @@ def search_wikipedia(state: State):
         api_key=os.getenv("GROQ_API_KEY")
     )
 
-    # Simplified prompt templates
-    pro_template = f"Generate a focused Wikipedia search query about {state['topic']} related to {state['pro_debator']}"
-    anti_template = f"Generate a focused Wikipedia search query about {state['topic']} related to {state['anti_debator']}"
-    
-    # Choose template based on last message type
-    search_query_prompt = pro_template if isinstance(state["debate"][-1], HumanMessage) else anti_template
+    planner = state['planner']
+    last_message = state["debate"][-1]
+    pro_debator = state['pro_debator']
+    anti_debator = state['anti_debator']
+    topic = state['topic']
 
-    # Get search query
-    search_query = model.invoke(search_query_prompt).content.strip()
+    # Simplified prompt templates
+    search_query_prompt = f"""
+        You are a Wikipedia search assistant. Your task is to generate a concise, 
+        relevant search query to retrieve the most accurate articles for the following 
+        participant:
+        - Debater: {pro_debator if isinstance(last_message, HumanMessage) else anti_debator}
+        - Topic: {topic}
+        - Planning Context: {planner}
+
+        Deliverable: A single, 30 characters, concise query (e.g., "Immigration_policy_of_Donald_Trump")
+        Note This is an example format only. Dont use it for answer.
+
+        Ensure the query directly relates to the topic and reflects the debater's
+        position.
+    """
+    structure_llm = model.with_structured_output(SearchQuery)
+    search_query = structure_llm.invoke(search_query_prompt)
 
     # Configure retriever with limits
     retriever = WikipediaRetriever(
@@ -31,7 +51,7 @@ def search_wikipedia(state: State):
     )
 
     # Get documents
-    search_docs = retriever.invoke(search_query)
+    search_docs = retriever.invoke(search_query.query)
 
     # Extract and combine summaries more efficiently
     summaries = []
