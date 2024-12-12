@@ -49,5 +49,7 @@ def debate_agent(memory, state):
     debator = builder.compile(checkpointer=memory).with_config(run_name="Starting Debate")
     thread = {"configurable": {"thread_id": "1", "recursion_limit": 100}}
     result = debator.invoke(state, thread)
-    return result['debate']
+    return {'debate': result['debate'], 'winner': result['winner'].winner}
+    # print(result['winner'])
+    # return result['debate']
 

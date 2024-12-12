@@ -87,7 +87,7 @@ def pro_debator_node(state: State):
         debate_history=debate_history,
         anti_debator_response=anti_debator_response,
         planner=planner,
-        context={context}
+        context=context
       )
 
     pro_debator_response_content = gemini_model.invoke(system_message).content
