@@ -34,7 +34,7 @@ export default function DebatePage() {
             topic: debate_topic,
             pro_debator: debater1,
             anti_debator: debater2,
-            max_iterations: 1,
+            max_iterations: 2,
           }),
         });
 
