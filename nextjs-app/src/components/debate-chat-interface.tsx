@@ -1,14 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Debater, Message } from '@/types';
-import { Mic, User } from 'lucide-react';
+import { Debater, Message } from "@/types";
+import { Mic, User } from "lucide-react";
 
 interface DebateChatInterfaceProps {
   gameMode: string;
@@ -17,8 +16,13 @@ interface DebateChatInterfaceProps {
   messages: Message[];
 }
 
-export function DebateChatInterface({ gameMode, topic, debaters, messages }: DebateChatInterfaceProps) {
-  const [inputMessage, setInputMessage] = useState('');
+export function DebateChatInterface({
+  gameMode,
+  topic,
+  debaters,
+  messages,
+}: DebateChatInterfaceProps) {
+  const [inputMessage, setInputMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [currentTurn, setCurrentTurn] = useState<string>(debaters[0].id);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -36,15 +40,17 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
     if (inputMessage.trim() && isConnected) {
       const newMessage: Message = {
         id: Date.now().toString(),
-        sender: gameMode === 'you-vs-ai' ? 'user' : 'moderator',
+        sender: gameMode === "you-vs-ai" ? "user" : "moderator",
         content: inputMessage,
         timestamp: new Date(),
       };
       ws.current?.send(JSON.stringify(newMessage));
-      setInputMessage('');
+      setInputMessage("");
 
       // Switch turns
-      setCurrentTurn(currentTurn === debaters[0].id ? debaters[1].id : debaters[0].id);
+      setCurrentTurn(
+        currentTurn === debaters[0].id ? debaters[1].id : debaters[0].id
+      );
     }
   };
 
@@ -59,7 +65,7 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
       <Card className="w-full mx-auto bg-transparent text-white border-none shadow-none">
         <CardHeader>
           <CardTitle className="text-4xl md:text-5xl font-serif text-center mb-2">
-            {gameMode === 'ai-vs-ai' ? 'AI vs AI Debate' : 'You vs AI Debate'}
+            {gameMode === "ai-vs-ai" ? "AI vs AI Debate" : "You vs AI Debate"}
           </CardTitle>
           <p className="text-center text-gray-300 mb-4">Topic: {topic}</p>
         </CardHeader>
@@ -79,20 +85,22 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
                 >
                   <div
                     className={`flex ${
-                      message.sender === 'system'
-                        ? 'justify-center'
+                      message.sender === "system"
+                        ? "justify-center"
                         : message.sender === debaters[0].id
-                        ? 'justify-start'
-                        : 'justify-end'
+                        ? "justify-start"
+                        : "justify-end"
                     }`}
                   >
                     <div
                       className={`flex items-start max-w-[80%] ${
-                        message.sender === debaters[0].id ? 'flex-row' : 'flex-row-reverse'
+                        message.sender === debaters[0].id
+                          ? "flex-row"
+                          : "flex-row-reverse"
                       }`}
                     >
                       <Avatar className="w-8 h-8">
-                        {message.sender === 'system' ? (
+                        {message.sender === "system" ? (
                           <User className="w-6 h-6" />
                         ) : (
                           <AvatarImage
@@ -103,16 +111,16 @@ export function DebateChatInterface({ gameMode, topic, debaters, messages }: Deb
                       </Avatar>
                       <div
                         className={`mx-2 p-3 rounded-lg ${
-                          message.sender === 'system'
-                            ? 'bg-gray-500 text-white'
+                          message.sender === "system"
+                            ? "bg-gray-500 text-white"
                             : message.sender === debaters[0].id
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-black'
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 text-black"
                         }`}
                       >
                         <p className="font-semibold mb-1">
-                          {message.sender === 'system'
-                            ? 'System'
+                          {message.sender === "system"
+                            ? "System"
                             : getDebaterByName(message.sender).name}
                         </p>
                         <p>{message.content}</p>

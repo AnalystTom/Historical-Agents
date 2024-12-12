@@ -30,10 +30,12 @@ def greeting_node(state: State):
 
         Instructions:
         * Begin by welcoming the audience.
-        * Briefly introduce the participants and their positions.
+        * Briefly introduce the participants and their positions like you are hosting a
+        show. Briefly introduce the topic and what is at stake
         * Clearly state the topic of the debate.
 
-        Keep the tone formal and neutral. Avoid opinions, commentary, or humor. Keep the introduction concise.
+        Keep the tone formal and neutral. Avoid opinions, commentary, or humor. 
+        Keep the introduction concise.
     """
     greetings = gemini_model.invoke(prompt).content
 

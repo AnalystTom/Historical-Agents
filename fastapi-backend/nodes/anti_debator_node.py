@@ -72,7 +72,7 @@ def anti_debator_node(state: State):
     anti_debator_response_content = gemini_model.invoke(system_message).content
 
     anti_debator_response = AIMessage(
-        content=f"{anti_debator}: {anti_debator_response_content}",
+        content=f"{anti_debator_response_content}",
         name="anti_response"
     )
 

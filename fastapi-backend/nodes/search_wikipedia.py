@@ -46,7 +46,7 @@ def search_wikipedia(state: State):
     # Configure retriever with limits
     retriever = WikipediaRetriever(
         doc_content_chars_max=250,  # Limit character length
-        load_max_docs=1,             # Limit number of documents
+        top_k_results=1,             # Limit number of documents
         load_all_available_meta=False # Only load essential metadata
     )
 
