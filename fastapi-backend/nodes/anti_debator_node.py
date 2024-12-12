@@ -76,5 +76,10 @@ def anti_debator_node(state: State):
         name="anti_response"
     )
 
-    debate.append(anti_debator_response)
-    return {"anti_debator_response": anti_debator_response, "debate": debate, 'context':[]}
+    state['anti_debator_response'] = anti_debator_response
+    state["debate"].append(anti_debator_response)
+    state['context']= []
+
+    print(f"Context at Anti Debator: {state['context']}")
+
+    return state

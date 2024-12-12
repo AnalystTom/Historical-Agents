@@ -47,5 +47,7 @@ def search_web(state: State):
         print(entry['snippet'])
         result += entry['snippet'] + "\n"
 
+    print("DuckDuckGo Search Result:", result)
+    
     state['context'].append(result)
     return {"context": state['context']}
