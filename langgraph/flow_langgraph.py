@@ -18,6 +18,8 @@ Personas = db['Personas']
 
 load_dotenv()
 
+
+
 # Set up the LLM
 llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'), streaming=True)
 

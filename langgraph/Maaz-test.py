@@ -31,7 +31,7 @@ from langchain_groq import ChatGroq
 from langgraph.graph import MessagesState
 from langgraph.graph.state import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_community.tools import DuckDuckGoSearchResults
+
 # [Add other necessary imports from your original code]
 
 
@@ -368,7 +368,7 @@ def search_wikipedia(state: State):
         Find the most relevant wikipedia articles for {pro_debator} related to
         the topic {topic} taking into account the following planning:
         {planner}
-        
+
       """
     elif isinstance(last_message, AIMessage):
       search_query_prompt = f"""
@@ -376,8 +376,7 @@ def search_wikipedia(state: State):
             Task:
             Find the most relevant wikipedia articles for {anti_debator} related to
             the topic {topic}
-            
-          """
+
 
     search_query = model.invoke(search_query_prompt).content.strip()
 
@@ -746,8 +745,7 @@ builder = StateGraph(State)
 builder.add_node("Greetings", greeting_node)
 builder.add_node("Pro Debator", pro_debator_node)
 builder.add_node("Planner", planning_node)
-#builder.add_node("Search Web", search_web)
-#builder.add_node("Search Wikipedia", search_wikipedia)
+
 builder.add_node("Anti Debator", anti_debator_node)
 builder.add_node("Debate Summarizer", debate_summarizer_node)
 builder.add_node('Winner Decider', winner_decider_node)
@@ -755,10 +753,7 @@ builder.add_node('Winner Decider', winner_decider_node)
 # Add edges
 builder.add_edge(START, "Greetings")
 builder.add_conditional_edges("Greetings", router, ['Planner', 'Pro Debator'])
-#builder.add_edge("Planner", "Search Web")
-#builder.add_edge("Planner", "Search Wikipedia")
-#builder.add_conditional_edges("Search Web", analyzer_router, ["Pro Debator", "Anti Debator"])
-#builder.add_conditional_edges("Search Wikipedia", analyzer_router, ["Pro Debator", "Anti Debator"])
+
 
 
 builder.add_edge("Pro Debator", "Planner")
