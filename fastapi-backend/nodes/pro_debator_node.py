@@ -93,9 +93,10 @@ def pro_debator_node(state: State):
     pro_debator_response_content = gemini_model.invoke(system_message).content
 
     pro_debator_response = HumanMessage(
-        content=f"{pro_debator}: {pro_debator_response_content}",
+        content=f"{pro_debator_response_content}",
         name="pro_response"
     )
 
     debate.append(pro_debator_response)
-    return {"pro_debator_response": pro_debator_response, "debate": debate}
+    context=[]
+    return {"pro_debator_response": pro_debator_response, "debate": debate, "context": context}
