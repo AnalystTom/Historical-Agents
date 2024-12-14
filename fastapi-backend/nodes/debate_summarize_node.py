@@ -64,7 +64,6 @@ def debate_summarizer_node(state: State):
   summary = model.invoke(system_message).content
   debate_history.append(summary)
   state['debate_history'] = debate_history
-  state['iteration'] += 1
   print(f"Updated Iteration: {state['iteration']}")
   return state
 

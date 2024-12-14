@@ -16,6 +16,7 @@ wikipedia = "^1.4.0"
 duckduckgo-search = "^6.3.7"
 langchain-groq = "^0.2.1"
 langchain-community = "^0.3.9"
+websockets = "^14.1"
 
 
 [build-system]

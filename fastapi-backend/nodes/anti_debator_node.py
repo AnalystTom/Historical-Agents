@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import asyncio
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import AIMessage
@@ -8,13 +9,13 @@ from states.agent_state import State
 
 load_dotenv()
 
-def anti_debator_node(state: State):
+def anti_debator_node(state: State, websocket_manager):
     """LangGraph node that represents the anti debator"""
 
-    gemini_model = ChatGroq(
-        model="llama-3.3-70b-versatile",
+    gemini_model = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
         temperature=0.5,
-        api_key=os.getenv("GROQ_API_KEY")
+        api_key=os.getenv("GOOGLE_API_KEY")
     )
 
     topic = state["topic"]
@@ -44,8 +45,7 @@ def anti_debator_node(state: State):
         {anti_debator}'s persona and known debate style.  
         2. **Clarity and Brevity**: Ensure arguments are precise, logical, 
         and impactful.  
-        3. **Debate Continuity**: Use relevant points from the debate history 
-        to build stronger responses.  
+        3. **Debate Continuity**: Use relevant points from the debate history to build stronger responses.  
         4. **Planning Context**: Incorporate strategies and insights from the 
         planning stage ({planner}), results of web and wikipedia search 
         {context}
@@ -79,7 +79,10 @@ def anti_debator_node(state: State):
     state['anti_debator_response'] = anti_debator_response
     state["debate"].append(anti_debator_response)
     state['context']= []
+    state['iteration'] += 1
 
-    print(f"Context at Anti Debator: {state['context']}")
+    asyncio.create_task(
+        websocket_manager.send_update(anti_debator, anti_debator_response_content)
+    )
 
     return state

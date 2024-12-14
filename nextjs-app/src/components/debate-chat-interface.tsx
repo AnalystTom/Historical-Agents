@@ -14,6 +14,8 @@ interface DebateChatInterfaceProps {
   topic: string;
   debaters: Debater[];
   messages: Message[];
+  winner?: string; // New prop for winner
+  history?: string[]; // New prop for debate summary
 }
 
 export function DebateChatInterface({
@@ -21,6 +23,8 @@ export function DebateChatInterface({
   topic,
   debaters,
   messages,
+  winner,
+  history,
 }: DebateChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -56,9 +60,9 @@ export function DebateChatInterface({
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = 0; // Scroll to the top when the component mounts
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, []); // Empty dependency array to run only on mount
+  }, [messages, history]); // Re-scroll when messages or history updates
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-start p-4 overflow-hidden">
@@ -70,11 +74,9 @@ export function DebateChatInterface({
           <p className="text-center text-gray-300 mb-4">Topic: {topic}</p>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between mb-4">
-            {/* Debater avatars and turn indicator */}
-          </div>
           <ScrollArea className="h-[80vh] mb-4 pr-4" ref={scrollAreaRef}>
             <AnimatePresence initial={false}>
+              {/* Render messages */}
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
@@ -132,6 +134,28 @@ export function DebateChatInterface({
                   </div>
                 </motion.div>
               ))}
+
+              {/* Render final results (winner and history) styled as system messages */}
+              {winner && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  className="mb-4"
+                >
+                  <div className="flex justify-center">
+                    <div className="flex items-start max-w-[80%]">
+                      <div className="mx-2 p-3 rounded-lg bg-gray-500 text-white">
+                        <p className="font-semibold mb-1">System</p>
+                        <p className="mb-2">Winner: {winner}</p>
+                        {history?.map((line, index) => (
+                          <p key={index}>{line}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </ScrollArea>
         </CardContent>
