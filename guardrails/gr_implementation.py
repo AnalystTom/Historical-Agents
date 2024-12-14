@@ -32,6 +32,7 @@ from guardrails import Guard, OnFailAction
 from guardrails.hub import ToxicLanguage
 from guardrails.hub import CompetitorCheck
 
+
 guard = Guard().use_many(
     ToxicLanguage(threshold=0.5, validation_method="sentence", on_fail=OnFailAction.EXCEPTION),
     CompetitorCheck(["Apple", "Microsoft", "Google"], on_fail=OnFailAction.EXCEPTION),
@@ -39,16 +40,25 @@ guard = Guard().use_many(
 )
 
 try:
-    print('One')
-    guard.validate(
+
+    op=guard.validate(
+        """
+            You are a horrible  human being with no sense of beloning
+        """
+    )
+    print('op',op)
+
+    op1=guard.validate(
         """An apple a day keeps a doctor away.
         This is good advice for keeping your health."""
     )  # Both the guardrails pass
+    print('op1',op1)
 
 
-    print('One')
-    guard.validate(
+    op2=guard.validate(
         """Shut the hell up! Apple just released a new iPhone."""
     )  # Both the guardrails fail
+    print('op2',op2)
+
 except Exception as e:
     print(e)

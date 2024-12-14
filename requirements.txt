@@ -19,3 +19,4 @@ starlette==0.41.2
 tqdm==4.66.6
 typing_extensions==4.12.2
 uvicorn==0.32.0
+nemoguardrails==0.11.0
