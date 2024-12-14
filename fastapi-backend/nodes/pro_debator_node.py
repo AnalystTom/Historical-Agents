@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import asyncio
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
@@ -8,13 +9,13 @@ from states.agent_state import State
 
 load_dotenv()
 
-def pro_debator_node(state: State):
+def pro_debator_node(state: State, websocket_manager):
     """LangGraph node that represents the pro debator"""
 
-    gemini_model = ChatGroq(
-      model="llama-3.3-70b-versatile",
+    gemini_model = ChatGoogleGenerativeAI(
+      model="gemini-1.5-flash",
       temperature=0.5,
-      api_key=os.getenv("GROQ_API_KEY")
+      api_key=os.getenv("GOOGLE_API_KEY")
     )
 
     topic = state['topic']
@@ -101,6 +102,8 @@ def pro_debator_node(state: State):
     state["debate"].append(pro_debator_response)
     state['context'] = []
 
-    print(f"Context at Pro Debator: {state['context']}")
-    
+    asyncio.create_task(
+        websocket_manager.send_update(pro_debator, pro_debator_response_content)
+    )
+
     return state

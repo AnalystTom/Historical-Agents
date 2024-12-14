@@ -1,76 +1,105 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation"; // Correct import
+import { useSearchParams } from "next/navigation";
 import { DebateChatInterface } from "@/components/debate-chat-interface";
 import { Debater, Message } from "@/types";
 
 export default function DebatePage() {
-  const searchParams = useSearchParams(); // Use useSearchParams
+  const searchParams = useSearchParams();
   const debate_topic = searchParams.get("debate_topic");
   const debater1 = searchParams.get("debater1");
   const debater2 = searchParams.get("debater2");
 
-  const [greetings, setGreetings] = useState<string>("");
+  const [greetings, setGreetings] = useState<string>("Welcome to the debate!");
   const [conversation, setConversation] = useState<Message[]>([]);
-  const [debateHistory, setDebateHistory] = useState<string[]>([]);
-  const [winner, setWinner] = useState<string>("");
+  const [winner, setWinner] = useState<string>(""); // Updated dynamically
+  const [debateHistory, setDebateHistory] = useState<string[]>([]); // Stores debate summary
 
-  const [isReady, setIsReady] = useState(false);
   const debater1Id = debater1 || "unknown";
   const debater2Id = debater2 || "unknown";
 
   useEffect(() => {
-    if (!debate_topic || !debater1 || !debater2) return; // Ensure parameters are available
+    if (!debate_topic || !debater1 || !debater2) return;
 
-    const fetchDebateData = async () => {
+    const ws = new WebSocket("ws://localhost:8000/ws/debate");
+
+    ws.onopen = () => {
+      console.log("WebSocket connection established");
+      ws.send(
+        JSON.stringify({
+          topic: debate_topic,
+          pro_debator: debater1,
+          anti_debator: debater2,
+          max_iterations: 2,
+        })
+      );
+    };
+
+    ws.onmessage = (event) => {
       try {
-        const response = await fetch("http://localhost:8000/trigger_workflow", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            topic: debate_topic,
-            pro_debator: debater1,
-            anti_debator: debater2,
-            max_iterations: 2,
-          }),
-        });
+        const message = JSON.parse(event.data);
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
+        if (message.type === "new_message" && message.data) {
+          const { type: messageType, message: messageContent } = message.data;
+
+          setConversation((prev) => {
+            console.log("Received new_message: ", message);
+
+            const senderName =
+              messageType === "HumanMessage"
+                ? `${debater1}`
+                : messageType === "AIMessage"
+                ? `${debater2}`
+                : "system";
+
+            const updatedConversation = [
+              ...prev,
+              {
+                id: `${prev.length}`,
+                sender: senderName,
+                content: messageContent,
+                timestamp: new Date(),
+              },
+            ];
+            return updatedConversation;
+          });
+        } else if (message.type === "final_result") {
+          console.log("Received final_result: ", message);
+
+          // Update winner and debate history
+          setWinner(message.winner.winner || "No winner decided");
+          setDebateHistory([
+            `Summary: ${message.summary || "No summary available"}`,
+            `Clarity: ${message.winner.clarity}`,
+            `Persuasiveness: ${message.winner.persuasiveness}`,
+            `Relevance: ${message.winner.relevance}`,
+            `Logical Soundness: ${message.winner.logical_soundness}`,
+          ]);
+        } else {
+          console.warn("Unexpected WebSocket message format:", message);
         }
-
-        const data = await response.json();
-
-        // Set greetings, conversation, and winner state
-        setGreetings(data.greetings);
-        setConversation(
-          data.conversation.map((msg: any, index: number) => ({
-            id: index.toString(),
-            sender: msg.speaker,
-            content: msg.content, // Add content for display
-          }))
-        );
-        setWinner(data.winner); // Set the debate winner
-        setDebateHistory(data.debate_history || []);
-        setIsReady(true);
       } catch (error) {
-        console.error("There was a problem with the fetch operation:", error);
+        console.error("Error parsing WebSocket message:", error);
       }
     };
 
-    fetchDebateData();
+    ws.onclose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    return () => {
+      ws.close();
+    };
   }, [debate_topic, debater1, debater2]);
 
-  if (!isReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-2xl font-bold">Loading debate...</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    console.log("Conversation state updated:", conversation);
+  }, [conversation]);
 
   const debaters: Debater[] = [
     {
@@ -97,34 +126,15 @@ export default function DebatePage() {
     },
   ];
 
-  const combinedMessages: Message[] = [
-    {
-      id: "greeting",
-      sender: "system",
-      content: greetings,
-      timestamp: new Date(),
-    },
-    ...conversation,
-    ...debateHistory.map((history, index) => ({
-      id: `history-${index}`,
-      sender: "system",
-      content: history,
-      timestamp: new Date(),
-    })),
-    {
-      id: "winner",
-      sender: "system",
-      content: `The winner of the debate is ${winner}.`,
-      timestamp: new Date(),
-    },
-  ];
   return (
     <div className="min-h-screen bg-gray-100">
       <DebateChatInterface
         gameMode="ai-vs-ai"
-        topic={debate_topic!}
+        topic={debate_topic || "Unknown Topic"}
         debaters={debaters}
-        messages={combinedMessages}
+        messages={conversation}
+        winner={winner} // Pass the winner to the interface
+        history={debateHistory} // Pass the debate history
       />
     </div>
   );
